@@ -1,6 +1,6 @@
 # 📚 LearnSphere – The Ultimate Learning Hub 🚀
 
-![LearnSphere Banner](https://github.com/omroy07/LearnSphere_2/blob/main/img/home.png) <!-- Replace with an actual image link -->
+![LearnSphere Banner](https://github.com/omroy07/LearnSphere_2/blob/main/img/home.png) 
 
 ## 🌟 About LearnSphere  
 **LearnSphere** is an AI-powered educational platform designed to facilitate peer learning, knowledge sharing, and interactive discussions. With advanced AI chatbots and a seamless UI, LearnSphere enhances the learning experience by providing instant support, progress tracking, and collaboration opportunities.  
@@ -19,11 +19,11 @@
 ---
 
 ## 🖥️ Tech Stack  
-- **Frontend:** React.js, Tailwind CSS  
-- **Backend:** Node.js, Express.js  
-- **Database:** MongoDB  
-- **AI Engine:** NLP-based chatbot (Free AI Engine)  
-- **Authentication:** JWT & OAuth  
+- **Frontend:** HTML5, CSS3, JavaScript  
+- **Backend / Logic:** Python  
+- **Styling:** Custom CSS  
+- **Interactive Modules:** Educational simulations and quizzes  
+- **Project Type:** Static educational web platform
 
 ---
 
@@ -42,15 +42,35 @@
 git clone https://github.com/omroy07/LearnSphere_2.git
 cd LearnSphere_2
 ```
-2️⃣ Install Dependencies
-```bash
-npm install
-```
-3️⃣ Start the Development Server
-```bash
-npm start
-```
+### 2️⃣ Open the Project
 
+Open the project folder in VS Code or any code editor.
+
+### 3️⃣ Run the Project Locally
+
+You can run the project using:
+
+- Open `index.html` directly in your browser
+
+OR
+
+- Use the **Live Server** extension in VS Code for a better development experience.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+### Steps to Contribute
+1. Fork the repository
+2. Clone your fork locally
+3. Create a new branch
+4. Make your changes
+5. Commit and push your changes
+6. Open a Pull Request
+
+Please make sure your contributions are properly tested and aligned with the project structure.
 
 ### My ELUSOC 2026 Admin Badges!
 
