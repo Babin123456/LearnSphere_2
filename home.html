@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - LearnSphere</title>
+    <meta name="description" content="Your LearnSphere Dashboard — choose a subject, track your progress, and chat with the AI tutor.">
+    <title>Dashboard – LearnSphere</title>
     <link rel="stylesheet" href="home.css">
     <style>
         body {
@@ -14,45 +15,29 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             max-width: 900px;
             margin: auto;
             padding: 20px;
             animation: fadeIn 1.5s ease-in-out;
         }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        .title {
-            font-size: 2.5rem;
-            text-shadow: 0 0 10px cyan;
-        }
-        .description {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            opacity: 0.8;
-        }
-        .canvas-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-            background: #001f3f;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease-in-out;
-        }
-        .canvas-container:hover {
-            transform: scale(1.05);
-        }
-        .button-grid {
+
+        .title { font-size: 2.5rem; text-shadow: 0 0 10px cyan; }
+        .description { font-size: 1.2rem; margin-bottom: 20px; opacity: 0.8; }
+
+        .button-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
+
         .button {
             background: #007bff;
             color: white;
@@ -67,58 +52,167 @@
             position: relative;
             overflow: hidden;
         }
-        .button:hover {
-            background: #0056b3;
-            transform: scale(1.05);
-        }
+
+        .button:hover { background: #0056b3; transform: scale(1.05); }
+
         @media (max-width: 600px) {
-            .title {
-                font-size: 2rem;
-            }
-            .description {
-                font-size: 1rem;
-            }
+            .title { font-size: 2rem; }
+            .description { font-size: 1rem; }
+        }
+
+        /* ── Progress Tracker ─────────────────────────────────────────────── */
+        .progress-overview {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,255,255,0.15);
+        }
+
+        .progress-overview h2 { color: #66fcf1; margin-bottom: 10px; }
+
+        /* Completion bar */
+        .progress-bar-track {
+            background: #2a2a2a;
+            border-radius: 50px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        #progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #007bff, #66fcf1);
+            border-radius: 50px;
+            transition: width 0.5s ease;
+        }
+
+        #progress-summary {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 14px;
+        }
+
+        /* Progress item list */
+        #progressList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+
+        #progressList li.progress-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2a2a2a;
+            padding: 10px 14px;
+            margin: 6px 0;
+            border-radius: 6px;
+            border-left: 4px solid #444;
+            transition: border-color 0.3s;
+        }
+
+        #progressList li.progress-completed  { border-color: #66fcf1; }
+        #progressList li.progress-in-progress { border-color: #f0a500; }
+        #progressList li.progress-not-started { border-color: #555; }
+
+        .progress-label { font-size: 0.95rem; flex: 1; }
+
+        .progress-badge {
+            background: none;
+            border: 1px solid currentColor;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        .progress-badge:hover  { background: rgba(255,255,255,0.1); }
+        .progress-badge:active { transform: scale(0.95); }
+
+        .progress-badge:focus-visible {
+            outline: 2px solid cyan;
+            outline-offset: 2px;
         }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        <h1>Welcome to LearnSphere</h1>
-        <p>Choose a subject to start learning:</p>
+        <h1 class="title">Welcome to LearnSphere</h1>
+        <p class="description">Choose a subject to start learning:</p>
 
-        <div class="button-container">
-            <a href="sub/maths.html" class="button">Maths</a>
-            <a href="sub/physics.html" class="button">Physics</a>
-            <a href="sub/chemistry.html" class="button">Chemistry</a>
-            <a href="sub/biology.html" class="button">Biology</a>
+        <div class="button-container" role="navigation" aria-label="Subject navigation">
+            <a href="sub/maths.html" class="button">📐 Maths</a>
+            <a href="sub/physics.html" class="button">⚛️ Physics</a>
+            <a href="sub/chemistry.html" class="button">🧪 Chemistry</a>
+            <a href="sub/biology.html" class="button">🧬 Biology</a>
         </div>
 
         <!-- Study Progress Section -->
-        <section class="study-progress">
-            <h2>Your Study Progress</h2>
-            <ul id="progressList">
-                <li>Physics: Motion and Laws of Motion - Completed</li>
-                <li>Maths: Calculus - In Progress</li>
-                <li>Chemistry: Atomic Structure - Not Started</li>
-                <li>Biology: Human Anatomy - Not Started</li>
+        <section class="progress-overview" aria-labelledby="progress-heading">
+            <h2 id="progress-heading">📊 Your Study Progress</h2>
+
+            <!-- Overall completion bar -->
+            <div
+                class="progress-bar-track"
+                role="progressbar"
+                aria-label="Overall study completion"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+            >
+                <div id="progress-bar-fill"></div>
+            </div>
+            <p id="progress-summary" aria-live="polite"></p>
+
+            <!-- Per-topic list — populated by progress.js -->
+            <ul id="progressList" aria-label="Topic progress list">
+                <!-- Dynamic content rendered by progress.js -->
             </ul>
         </section>
 
         <!-- Chatbot Section -->
-        <section class="chatbot">
-            <h2>Ask Your AI Tutor</h2>
+        <section class="chatbot" aria-labelledby="chatbot-heading">
+            <h2 id="chatbot-heading">🤖 Ask Your AI Tutor</h2>
             <div class="chat-container">
-                <div id="chat-box"></div>
-                <input type="text" id="user-input" placeholder="Ask me anything...">
-                <button onclick="sendMessage()">Send</button>
+                <div
+                    id="chat-box"
+                    role="log"
+                    aria-live="polite"
+                    aria-label="Chat conversation"
+                    aria-relevant="additions"
+                ></div>
+                <div class="chat-input-row">
+                    <input
+                        type="text"
+                        id="user-input"
+                        placeholder="Ask me anything..."
+                        aria-label="Chat message input"
+                        autocomplete="off"
+                    >
+                    <button
+                        onclick="sendMessage()"
+                        aria-label="Send message"
+                        id="sendBtn"
+                    >Send</button>
+                </div>
             </div>
         </section>
 
-        <button id="logoutButton" class="logout-button">Logout</button>
+        <button
+            id="logoutButton"
+            class="logout-button"
+            aria-label="Log out of LearnSphere"
+        >Logout</button>
     </div>
 
+    <script src="progress.js"></script>
     <script src="home.js"></script>
 </body>
 </html>
-
