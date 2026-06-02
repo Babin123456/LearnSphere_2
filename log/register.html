@@ -3,29 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - LearnSphere</title>
+    <meta name="description" content="Create your free LearnSphere account to access AI-powered tutoring, courses, and learning tools.">
+    <title>Sign Up – LearnSphere</title>
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
 
-    <div class="auth-container">
-        <h2>Create an Account</h2>
-        <form id="registerForm">
-            <label for="fullname">Full Name</label>
-            <input type="text" id="fullname" placeholder="Enter your full name" required>
+    <main role="main">
+        <div class="auth-container" role="region" aria-labelledby="register-heading">
+            <h2 id="register-heading">Create an Account</h2>
 
-            <label for="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required>
+            <!-- Inline error/success messages injected by login.js -->
+            <div id="auth-message" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Create a password" required>
+            <form
+                id="registerForm"
+                novalidate
+                aria-describedby="register-heading"
+            >
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input
+                        type="text"
+                        id="fullname"
+                        name="fullname"
+                        placeholder="Enter your full name"
+                        required
+                        autocomplete="name"
+                        aria-required="true"
+                    >
+                </div>
 
-            <button type="submit" class="auth-button">Sign Up</button>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        required
+                        autocomplete="email"
+                        aria-required="true"
+                    >
+                </div>
 
-            <p class="switch-auth">Already have an account? <a href="login.html">Log in</a></p>
-        </form>
-    </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a password (min. 6 characters)"
+                            required
+                            autocomplete="new-password"
+                            aria-required="true"
+                            minlength="6"
+                            aria-describedby="password-hint"
+                        >
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            id="togglePassword"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                        >👁</button>
+                    </div>
+                    <span id="password-hint" class="sr-only">Password must be at least 6 characters.</span>
+                </div>
+
+                <button type="submit" class="auth-button" id="registerSubmitBtn">
+                    Create Account
+                </button>
+
+                <p class="switch-auth">
+                    Already have an account?
+                    <a href="login.html" aria-label="Log in to your existing LearnSphere account">Log in</a>
+                </p>
+            </form>
+        </div>
+    </main>
 
     <script src="login.js"></script>
+    <script>
+        // Password visibility toggle
+        const toggleBtn = document.getElementById("togglePassword");
+        const passwordInput = document.getElementById("password");
+
+        toggleBtn.addEventListener("click", () => {
+            const isVisible = passwordInput.type === "text";
+            passwordInput.type = isVisible ? "password" : "text";
+            toggleBtn.setAttribute("aria-pressed", (!isVisible).toString());
+            toggleBtn.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
+        });
+    </script>
 </body>
 </html>
