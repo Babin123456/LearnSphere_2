@@ -1,20 +1,42 @@
 ---
-name: Feature request
-about: Suggest an improvement or new feature for LearnSphere
+name: ✨ Feature Request
+about: Suggest a new feature or enhancement for LearnSphere
 title: "[Feature]: "
-labels: [enhancement]
-assignees: ""
+labels: ["enhancement", "needs-discussion"]
+assignees: []
 ---
 
-## Problem / Background
-<!-- What problem are you trying to solve? Why is this needed? -->
+## ✨ Feature Description
 
-## Proposed Solution
-<!-- Describe the solution you’d like. Include any key requirements, UX/UI ideas, or scope. -->
+<!-- A clear and concise description of the feature you're proposing -->
 
-## Alternatives Considered
-<!-- Other approaches or features you have considered. -->
+## 🎯 Problem This Solves
 
-## Additional Context
-<!-- Add screenshots, references, or any other useful information. -->
+<!-- Describe the problem or user need this feature addresses -->
+<!-- Example: "As a learner, I find it difficult to track my progress because..." -->
 
+## 💡 Proposed Solution
+
+<!-- Describe your proposed implementation approach -->
+
+## 🔄 Alternatives Considered
+
+<!-- Have you considered alternative approaches? List them here. -->
+
+## 📊 Impact
+
+<!-- Who benefits from this feature? How significant is the improvement? -->
+
+## 📸 Mockups / Examples
+
+<!-- Sketches, wireframes, or links to similar implementations elsewhere -->
+
+## ☑️ Checklist
+
+- [ ] I searched existing issues to make sure this isn't a duplicate
+- [ ] This feature aligns with LearnSphere's educational mission
+- [ ] I am willing to contribute this feature myself (optional)
+
+## 🔗 Additional Context
+
+<!-- Any other context, references, or links -->

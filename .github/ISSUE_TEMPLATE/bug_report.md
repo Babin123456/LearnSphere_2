@@ -1,30 +1,43 @@
 ---
-name: Bug report
-about: Report a bug or regression in LearnSphere
+name: 🐛 Bug Report
+about: Report a reproducible bug or unexpected behaviour
 title: "[Bug]: "
-labels: [bug]
-assignees: ""
+labels: ["bug", "needs-triage"]
+assignees: []
 ---
 
-## Description
-<!-- A clear and concise description of what the bug is. -->
+## 🐛 Bug Description
 
-## Steps to Reproduce
-1.
-2.
-3.
+<!-- A clear and concise description of the bug -->
 
-## Expected Behaviour
-<!-- What you expected to happen. -->
+## 📋 Steps to Reproduce
 
-## Actual Behaviour
-<!-- What actually happened. -->
+1. Go to '...'
+2. Click on '...'
+3. See error
 
-## Screenshots / Logs
-<!-- Add screenshots, console logs, or other relevant information. -->
+## ✅ Expected Behaviour
 
-## Environment (optional)
-- Browser/Platform:
-- Device:
-- Version/Commit:
+<!-- What you expected to happen -->
 
+## ❌ Actual Behaviour
+
+<!-- What actually happened -->
+
+## 🖥️ Environment
+
+- **OS:** (e.g., Windows 11, macOS 14, Ubuntu 22.04)
+- **Browser:** (e.g., Chrome 120, Firefox 121, Safari 17)
+- **Device:** (e.g., Desktop, iPhone 14, Android)
+
+## 📸 Screenshots / Console Output
+
+<!-- Paste browser console errors here. Screenshot the UI bug if applicable. -->
+
+```
+<!-- Paste console errors here -->
+```
+
+## 🔗 Additional Context
+
+<!-- Any other context about the problem -->
