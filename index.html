@@ -4,16 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LearnSphere provides a world-class education to everyone, anywhere. Join our platform for high quality educational resources.">
+    <meta name="description" content="LearnSphere – An AI-powered educational platform providing world-class education to everyone, anywhere.">
     <title>LearnSphere - Quality Education</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-    <header class="navbar">
-        <div class="logo">LearnSphere</div>
-        <nav>
+    <header class="navbar" role="banner">
+        <div class="logo"><a href="index.html" aria-label="LearnSphere Home">LearnSphere</a></div>
+
+        <!-- Hamburger button — visible only on mobile -->
+        <button
+            class="hamburger"
+            id="hamburgerBtn"
+            aria-label="Toggle navigation menu"
+            aria-expanded="false"
+            aria-controls="navMenu"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav id="navMenu" role="navigation" aria-label="Main navigation">
             <ul>
                 <li><a href="explore.html">Explore</a></li>
                 <li><a href="courses.html">Courses</a></li>
@@ -21,29 +35,62 @@
                 <li><a href="community.html">Community</a></li>
             </ul>
         </nav>
+
         <div class="buttons">
             <button class="login"><a href="log/login.html">Log in</a></button>
-            <button class="signup"><a href="log\register.html">Sign up</a></button>
+            <button class="signup"><a href="log/register.html">Sign up</a></button>
         </div>
     </header>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>For every student, every classroom.</h1>
-            <h2>Real results.</h2>
-            <p>We aim to provide a world-class education to everyone, anywhere.</p>
-            <div class="cta-buttons">
-                <button class="cta"><a href="learner.html">Learners</a></button>
-                <button class="cta"><a href="teachers.html">Teachers</a></button>
-                <button class="cta"><a href="parents.html">Parents</a></button>
+    <main>
+        <section class="hero" aria-label="Welcome section">
+            <div class="hero-content">
+                <h1>For every student, every classroom.</h1>
+                <h2>Real results.</h2>
+                <p>We aim to provide a world-class education to everyone, anywhere.</p>
+                <div class="cta-buttons" role="group" aria-label="User type selection">
+                    <button class="cta"><a href="learner.html">Learners</a></button>
+                    <button class="cta"><a href="teachers.html">Teachers</a></button>
+                    <button class="cta"><a href="parents.html">Parents</a></button>
+                </div>
             </div>
-        </div>
-        <div class="hero-image">
-            <img src="student.png" alt="Happy Student" loading="lazy">
-        </div>
-    </section>
+            <div class="hero-image">
+                <img src="student.png" alt="Happy student studying on LearnSphere" loading="lazy" width="400" height="400">
+            </div>
+        </section>
+    </main>
 
     <script src="script.js"></script>
+    <script>
+        // Hamburger menu toggle
+        const hamburgerBtn = document.getElementById("hamburgerBtn");
+        const navMenu = document.getElementById("navMenu");
+
+        hamburgerBtn.addEventListener("click", () => {
+            const isOpen = navMenu.classList.toggle("is-open");
+            hamburgerBtn.classList.toggle("is-open", isOpen);
+            hamburgerBtn.setAttribute("aria-expanded", isOpen.toString());
+        });
+
+        // Close menu when a nav link is clicked (single-page anchor behaviour)
+        navMenu.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                navMenu.classList.remove("is-open");
+                hamburgerBtn.classList.remove("is-open");
+                hamburgerBtn.setAttribute("aria-expanded", "false");
+            });
+        });
+
+        // Close menu on Escape key
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && navMenu.classList.contains("is-open")) {
+                navMenu.classList.remove("is-open");
+                hamburgerBtn.classList.remove("is-open");
+                hamburgerBtn.setAttribute("aria-expanded", "false");
+                hamburgerBtn.focus();
+            }
+        });
+    </script>
 </body>
 
 </html>
