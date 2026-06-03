@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Page not found – LearnSphere. The page you are looking for does not exist.">
+    <meta name="robots" content="noindex, nofollow">
+    <title>404 – Page Not Found | LearnSphere</title>
+    <style>
+        :root {
+            --color-bg-start: #0d0d0d;
+            --color-bg-end: #1a1a2e;
+            --color-cyan: #00d9ff;
+            --color-blue: #007bff;
+            --color-blue-dark: #0056b3;
+            --color-text: #ffffff;
+            --color-text-muted: rgba(255, 255, 255, 0.65);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end));
+            color: var(--color-text);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        /* ── Floating particles background ── */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--color-cyan);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+            10%  { opacity: 0.4; }
+            90%  { opacity: 0.4; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* ── Main content ── */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            animation: fadeSlideIn 0.8s ease-out both;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── 404 Number ── */
+        .error-code {
+            font-size: clamp(5rem, 20vw, 9rem);
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--color-cyan), var(--color-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            animation: glowPulse 3s ease-in-out infinite;
+            letter-spacing: -2px;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 12px rgba(0, 217, 255, 0.5)); }
+            50%       { filter: drop-shadow(0 0 30px rgba(0, 217, 255, 0.9)); }
+        }
+
+        /* ── Emoji icon ── */
+        .icon {
+            font-size: 3.5rem;
+            display: block;
+            margin: 8px 0 16px;
+            animation: bounce 2.5s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-12px); }
+        }
+
+        h1 {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px var(--color-cyan);
+        }
+
+        p {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        /* ── Buttons ── */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            padding: 13px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--color-blue);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0, 123, 255, 0.35);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background: var(--color-blue-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 123, 255, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-cyan);
+            border: 2px solid var(--color-cyan);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .btn-secondary:hover,
+        .btn-secondary:focus {
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 0 16px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn:focus-visible {
+            outline: 3px solid var(--color-cyan);
+            outline-offset: 3px;
+        }
+
+        /* ── Countdown ── */
+        .auto-redirect {
+            margin-top: 28px;
+            font-size: 0.88rem;
+            color: var(--color-text-muted);
+        }
+
+        #countdown {
+            color: var(--color-cyan);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Animated background particles -->
+    <div class="particles" aria-hidden="true" id="particles"></div>
+
+    <main class="container" role="main">
+        <span class="error-code" aria-label="Error 404">404</span>
+        <span class="icon" role="img" aria-label="Lost in space">🚀</span>
+
+        <h1>Oops! Page Not Found</h1>
+        <p>
+            The page you're looking for doesn't exist, has been moved,<br>
+            or the link may be broken. Let's get you back on track!
+        </p>
+
+        <nav class="button-group" aria-label="Recovery options">
+            <a href="index.html" class="btn btn-primary">🏠 Go Home</a>
+            <a href="home.html" class="btn btn-secondary">📚 Dashboard</a>
+        </nav>
+
+        <p class="auto-redirect" aria-live="polite">
+            Redirecting to the homepage in <span id="countdown">10</span> seconds…
+        </p>
+    </main>
+
+    <script>
+        // ── Particle generator ──────────────────────────────────────────────
+        const container = document.getElementById("particles");
+        const count = 30;
+
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement("span");
+            p.className = "particle";
+            p.style.left = Math.random() * 100 + "%";
+            p.style.animationDuration = (6 + Math.random() * 10) + "s";
+            p.style.animationDelay = (Math.random() * 8) + "s";
+            p.style.width = p.style.height = (2 + Math.random() * 4) + "px";
+            container.appendChild(p);
+        }
+
+        // ── Auto-redirect countdown ─────────────────────────────────────────
+        let seconds = 10;
+        const countdownEl = document.getElementById("countdown");
+
+        const timer = setInterval(() => {
+            seconds -= 1;
+            countdownEl.textContent = seconds;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                window.location.href = "index.html";
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>

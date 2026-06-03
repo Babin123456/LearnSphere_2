@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chemistry</title>
+    <meta name="description" content="Explore Chemistry chapters on LearnSphere — Atomic Structure, Chemical Bonding, Equilibrium, and Thermodynamics.">
+    <title>Chemistry – LearnSphere</title>
     <link rel="stylesheet" href="chemistry.css">
     <style>
         body {
@@ -19,69 +20,48 @@
         .container {
             max-width: 900px;
             margin: auto;
-            padding: 20px;
+            padding: 40px 20px;
             animation: fadeIn 1.5s ease-in-out;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .title {
+        h1 {
             font-size: 2.5rem;
             text-shadow: 0 0 10px cyan;
+            margin-bottom: 10px;
         }
 
-        .description {
+        p {
             font-size: 1.2rem;
-            margin-bottom: 20px;
             opacity: 0.8;
+            margin-bottom: 30px;
         }
 
-        .canvas-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-            background: #001f3f;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .canvas-container:hover {
-            transform: scale(1.05);
-        }
-
-        .button-grid {
+        .button-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 0 10px;
         }
 
         .button {
             background: #007bff;
             color: white;
             text-decoration: none;
-            padding: 12px 15px;
-            border-radius: 8px;
+            padding: 14px 20px;
+            border-radius: 10px;
             font-size: 1rem;
-            transition: 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
             border: none;
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            display: block;
         }
 
         .button::before {
@@ -92,7 +72,7 @@
             width: 100%;
             height: 100%;
             background: rgba(255, 255, 255, 0.2);
-            transition: left 0.4s;
+            transition: left 0.4s ease;
         }
 
         .button:hover::before {
@@ -105,50 +85,26 @@
         }
 
         @media (max-width: 600px) {
-            .title {
-                font-size: 2rem;
-            }
-
-            .description {
-                font-size: 1rem;
-            }
+            h1 { font-size: 2rem; }
+            p  { font-size: 1rem; }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Chemistry</h1>
+        <h1>🧪 Chemistry</h1>
         <p>Welcome to the Chemistry section. Select a chapter to begin.</p>
-        <!-- Chapter Modal -->
+
         <div class="button-container">
-            <a href="../atomic_structure/atomic.html" class="button">Atomic Structure & Periodic Trends</a>
-            <a href="../chemical_bonding/chemical_bonding.html" class="button">Chemical Bonding & Molecular Geometry</a>
-            <a href="../equilibrium/equilibrium.html" class="button">Chemical Equilibrium & Le Chatelier’s Principle</a>
-            <a href="../thermo/thermo.html" class="button">Thermodynamics & Reaction Kinetics</a>
-            <a href="../home.html" class="button">Back to Home</a>
+            <a href="../atomic_structure/atomic.html" class="button">⚛️ Atomic Structure &amp; Periodic Trends</a>
+            <a href="../chemical_bonding/chemical_bonding.html" class="button">🔗 Chemical Bonding &amp; Molecular Geometry</a>
+            <a href="../equilibrium/equilibrium.html" class="button">⚖️ Chemical Equilibrium &amp; Le Chatelier's Principle</a>
+            <a href="../thermo/thermo.html" class="button">🔥 Thermodynamics &amp; Reaction Kinetics</a>
+            <a href="../home.html" class="button">🏠 Back to Home</a>
         </div>
     </div>
-
-    <script>
-        // Open Chapter Picker Modal
-        document.getElementById("chapterPicker").addEventListener("click", function () {
-            document.getElementById("chapterModal").style.display = "block";
-        });
-
-        // Close Modal
-        document.querySelector(".close").addEventListener("click", function () {
-            document.getElementById("chapterModal").style.display = "none";
-        });
-
-        // Select Chapter
-        function selectChapter(chapter) {
-            document.getElementById("chapterPicker").value = chapter;
-            document.getElementById("chapterModal").style.display = "none";
-            // Redirect to the chapter page (Optional)
-            window.location.href = chapter.toLowerCase().replace(" ", "") + ".html";
-        }
-    </script>
+    <!-- No inline script referencing non-existent DOM elements -->
 </body>
 
 </html>

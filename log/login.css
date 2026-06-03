@@ -12,9 +12,23 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
 }
 
+/* ── Accessibility: Screen-reader only text ───────────────────────────────── */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Auth Container ───────────────────────────────────────────────────────── */
 .auth-container {
     background: #1a1a2e;
     padding: 30px;
@@ -22,38 +36,88 @@ body {
     box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     width: 350px;
     text-align: center;
-    animation: fadeIn 1.5s ease-in-out;
+    animation: fadeIn 0.5s ease-out;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Heading ──────────────────────────────────────────────────────────────── */
 h2 {
     font-size: 1.8rem;
     margin-bottom: 15px;
     text-shadow: 0 0 10px cyan;
 }
 
+/* ── Form Groups ──────────────────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
 label {
     display: block;
-    text-align: left;
     font-weight: bold;
-    margin: 10px 0 5px;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
 }
 
 input {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
+    padding: 10px 12px;
     border-radius: 5px;
-    border: none;
+    border: 1px solid transparent;
     background: #0d0d0d;
     color: white;
     font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+input:focus {
+    outline: none;
+    border-color: cyan;
+    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.25);
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Password field with toggle button ───────────────────────────────────── */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input {
+    padding-right: 44px; /* Space for toggle button */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.2s ease;
+    line-height: 1;
+}
+
+.toggle-password:hover,
+.toggle-password:focus {
+    color: cyan;
+    outline: 2px solid cyan;
+    outline-offset: 2px;
+}
+
+/* ── Submit Button ────────────────────────────────────────────────────────── */
 .auth-button {
     width: 100%;
     background: #007bff;
@@ -63,23 +127,40 @@ input {
     border-radius: 8px;
     font-size: 1rem;
     cursor: pointer;
-    transition: 0.3s;
+    transition: background 0.3s ease, transform 0.2s ease;
+    margin-top: 4px;
 }
 
 .auth-button:hover {
     background: #0056b3;
-    transform: scale(1.05);
 }
 
+.auth-button:focus-visible {
+    outline: 3px solid cyan;
+    outline-offset: 3px;
+}
+
+.auth-button:active {
+    transform: scale(0.98);
+}
+
+/* ── Switch auth link ─────────────────────────────────────────────────────── */
 .switch-auth {
-    margin-top: 10px;
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .switch-auth a {
     color: #00d4ff;
     text-decoration: none;
+    font-weight: bold;
 }
 
-.switch-auth a:hover {
+.switch-auth a:hover,
+.switch-auth a:focus {
     text-decoration: underline;
+    outline: 2px solid #00d4ff;
+    outline-offset: 2px;
+    border-radius: 2px;
 }
