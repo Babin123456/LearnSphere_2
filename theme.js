@@ -17,6 +17,19 @@
 (function () {
     const STORAGE_KEY = "learnsphere_theme";
 
+    // ── Inject FontAwesome CDN if not already present ───────────────────────
+    function injectFontAwesome() {
+        if (!document.querySelector('link[href*="font-awesome"]') && 
+            !document.querySelector('link[href*="fontawesome"]')) {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css";
+            link.crossOrigin = "anonymous";
+            link.referrerPolicy = "no-referrer";
+            document.head.appendChild(link);
+        }
+    }
+
     // ── Determine initial theme ──────────────────────────────────────────────
     function getPreferredTheme() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -41,11 +54,11 @@
         if (!btn) return;
 
         if (theme === "dark") {
-            btn.textContent = "☀️ Light Mode";
+            btn.innerHTML = "<i class='fa-solid fa-sun'></i>";
             btn.setAttribute("aria-label", "Switch to light mode");
             btn.setAttribute("aria-pressed", "false");
         } else {
-            btn.textContent = "🌙 Dark Mode";
+            btn.innerHTML = "<i class='fa-solid fa-moon'></i>";
             btn.setAttribute("aria-label", "Switch to dark mode");
             btn.setAttribute("aria-pressed", "true");
         }
@@ -69,6 +82,9 @@
 
     // Apply theme immediately (before paint) to prevent flash
     applyTheme(getPreferredTheme());
+    
+    // Ensure FontAwesome is loaded for icons
+    injectFontAwesome();
 
     // Wire up toggle button after DOM is parsed
     if (document.readyState === "loading") {
