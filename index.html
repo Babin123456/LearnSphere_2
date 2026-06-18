@@ -5,11 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="LearnSphere – An AI-powered educational platform providing world-class education to everyone, anywhere.">
+
+    <!-- SEO / Social metadata -->
     <title>LearnSphere - Quality Education</title>
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://learnsphere.com/">
+
+    <meta property="og:title" content="LearnSphere - Quality Education">
+    <meta property="og:description" content="An AI-powered educational platform providing world-class education to everyone, anywhere.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://learnsphere.com/">
+    <meta property="og:image" content="https://learnsphere.com/student.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LearnSphere - Quality Education">
+    <meta name="twitter:description" content="An AI-powered educational platform providing world-class education to everyone, anywhere.">
+    <meta name="twitter:image" content="https://learnsphere.com/student.png">
+
     <link rel="stylesheet" href="variables.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="theme.js"></script>
+    <script src="theme.js" defer></script>
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Performance: Hero image priority for above-the-fold content -->
+    <link rel="preload" as="image" href="student.png">
 </head>
 
 <body>
@@ -60,14 +79,22 @@
                 </div>
             </div>
             <div class="hero-image">
-                <img src="student.png" alt="Happy student studying on LearnSphere" loading="lazy" width="400" height="400">
+                <img
+                    src="student.png"
+                    alt="Happy student studying on LearnSphere"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                    width="400"
+                    height="400"
+                >
             </div>
         </section>
     </main>
 
-    <script src="navbar.js"></script>
-    <script src="script.js"></script>
-    
+    <script src="navbar.js" defer></script>
+    <script src="script.js" defer></script>
+
 </body>
 
 </html>
