@@ -8,7 +8,10 @@
     <link rel="stylesheet" href="variables.css">
     <script src="theme.js"></script>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f1115">
   <style>
+
     .progress-wrap {
       max-width: 980px;
       margin: 24px auto;
@@ -177,11 +180,43 @@
         Shows accuracy and attempts per topic.
       </div>
     </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">🏅 Achievements & Badges</h2>
+      <div id="badgesContainerMyProgress"></div>
+      <div class="muted" style="font-size:13px; margin-top:10px">
+        Unlock milestones based on quiz attempts, streak, and accuracy.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">🗓️ Review queue</h2>
+      <div id="reviewQueueWidget" class="muted" style="font-size:14px; margin-top:6px;">Loading…</div>
+    </div>
   </div>
 
+
+
+
   <script src="quizProgress.js"></script>
+  <script src="badges.js"></script>
   <script src="my_progress.js"></script>
-    <script src="navbar.js"></script>
+  <script src="navbar.js"></script>
+
+
+
+
+
+    <script>
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function (err) {
+            console.warn('LearnSphere: Service Worker registration failed:', err);
+          });
+        });
+      })();
+    </script>
 </body>
 
 </html>

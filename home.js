@@ -25,7 +25,15 @@ function escapeHTML(str) {
     return div.innerHTML;
 }
 
+// ── Achievements (badges.js) ───────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.achievements?.renderBadges) {
+        window.achievements.renderBadges("badgesContainerHome");
+    }
+});
+
 // ── Chatbot ───────────────────────────────────────────────────────────────────
+
 /**
  * Appends a message bubble to the chat box.
  *

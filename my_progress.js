@@ -178,5 +178,82 @@ function init() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+function initReviewQueueWidget() {
+  const widget = document.getElementById("reviewQueueWidget");
+  if (!widget) return;
+
+  const STORAGE_KEY = "learnsphere_review_schedule_v1";
+  let schedule = {};
+  try {
+    schedule = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch {
+    schedule = {};
+  }
+
+  // Topic IDs must match progress.js topic list.
+  const TOPIC_IDS = [
+    "physics-motion",
+    "physics-nlm",
+    "physics-projectile",
+    "physics-ray",
+    "maths-calculus",
+    "maths-vectors",
+    "maths-probability",
+    "maths-geometry",
+    "chemistry-atomic",
+    "chemistry-bonding",
+    "chemistry-equil",
+    "chemistry-thermo",
+  ];
+
+  function todayLocalISODate() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function parseISODateToUTCStart(isoDateYYYYMMDD) {
+    const [y, m, day] = isoDateYYYYMMDD.split("-".map(Number));
+    const dt = new Date(y, m - 1, day, 0, 0, 0, 0);
+    return Math.floor(dt.getTime() / 86400000);
+  }
+
+  const today = todayLocalISODate();
+  const todayToken = parseISODateToUTCStart(today);
+
+  let dueCount = 0;
+  const nextDates = [];
+
+  for (const topicId of TOPIC_IDS) {
+    const s = schedule[topicId];
+    if (!s || !s.nextReviewDate) continue;
+
+    const nextToken = parseISODateToUTCStart(s.nextReviewDate);
+    if (todayToken >= nextToken) {
+      dueCount += 1;
+    } else {
+      nextDates.push(s.nextReviewDate);
+    }
+  }
+
+  if (dueCount > 0) {
+    widget.textContent = `${dueCount} review${dueCount === 1 ? "" : "s"} due today. Open Home to start review.`;
+  } else {
+    const earliest = nextDates.sort().shift();
+    widget.textContent = earliest ? `Next review available in ${earliest} (open Home).` : "No reviews scheduled yet. Complete topics to start getting review sessions.";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+  initReviewQueueWidget();
+  if (window.achievements?.renderBadges) {
+    window.achievements.renderBadges("badgesContainerMyProgress");
+  }
+});
+
+
+
 

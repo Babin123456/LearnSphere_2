@@ -146,6 +146,8 @@
         }
     </style>
     <script src="theme.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f1115">
 </head>
 <body>
 
@@ -183,8 +185,18 @@
             </ul>
         </section>
 
+        <!-- Achievements & Badges Section -->
+        <section class="progress-overview" aria-labelledby="badges-heading">
+            <h2 id="badges-heading">🏅 Achievements & Badges</h2>
+            <div id="badgesContainerHome"></div>
+            <div style="font-size:0.85rem; color: var(--text-muted); margin-top:10px;">
+                Unlock milestones based on quiz attempts, practice streak, and accuracy.
+            </div>
+        </section>
+
         <!-- Chatbot Section -->
         <section class="chatbot" aria-labelledby="chatbot-heading">
+
             <h2 id="chatbot-heading">🤖 Ask Your AI Tutor</h2>
             <div class="chat-container">
                 <div
@@ -222,6 +234,58 @@
     </div>
 
     <script src="progress.js"></script>
+    <script src="review.js"></script>
+    <script src="badges.js"></script>
     <script src="home.js"></script>
+
+    <!-- Review Modal -->
+    <div
+      id="reviewModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reviewModalTitle"
+      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; padding:18px;">
+      <div
+        style="max-width:720px; margin:70px auto 0; background:#0f1115; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <h2 id="reviewModalTitle" style="margin:0;">Review</h2>
+          <button id="reviewCloseBtn" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.9); padding:6px 10px; border-radius:10px; cursor:pointer;">✕</button>
+        </div>
+
+        <div id="reviewQuizContainer" style="margin-top:14px;" data-topic-id=""></div>
+
+        <div id="reviewResultMessage" style="margin-top:12px; color:rgba(255,255,255,0.85); font-weight:600;"></div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button id="reviewSubmitBtn" disabled style="background:var(--btn-primary-bg, #1b9aaa); color:white; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:800;">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Close review modal
+      (function(){
+        const btn = document.getElementById('reviewCloseBtn');
+        const modal = document.getElementById('reviewModal');
+        if(btn && modal){
+          btn.addEventListener('click', function(){
+            if(window.ReviewMode && window.ReviewMode.closeModal) window.ReviewMode.closeModal();
+          });
+          modal.addEventListener('click', function(e){
+            if(e.target === modal && window.ReviewMode && window.ReviewMode.closeModal) window.ReviewMode.closeModal();
+          });
+        }
+      })();
+
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function (err) {
+            console.warn('LearnSphere: Service Worker registration failed:', err);
+          });
+        });
+      })();
+    </script>
 </body>
 </html>
+
