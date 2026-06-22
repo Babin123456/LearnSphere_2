@@ -20,6 +20,7 @@ const APP_SHELL_URLS = [
   "/parents.html",
   "/teachers.html",
   "/my_progress.html",
+  "/review.html",
   "/404.html",
 
   // CSS
@@ -33,6 +34,7 @@ const APP_SHELL_URLS = [
   "/home.js",
   "/theme.js",
   "/progress.js",
+  "/review.js",
   "/quizProgress.js",
 
   // Images
