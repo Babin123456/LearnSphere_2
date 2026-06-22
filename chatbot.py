@@ -178,6 +178,69 @@ def chat():
         )
 
 
+@app.route("/explain_mistake", methods=["POST"])
+def explain_mistake():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    question = data.get("question", "").strip()
+    learner_answer = data.get("learnerAnswer", "").strip()
+    correct_answer = data.get("correctAnswer", "").strip()
+    topic = data.get("topic", "general").strip()
+
+    if not question or not learner_answer or not correct_answer:
+        return jsonify({"error": "Missing required fields (question, learnerAnswer, correctAnswer)"}), 400
+
+    # Rate limit per IP
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
+    ip = ip.split(",")[0].strip()
+
+    if rate_limited(ip):
+        return jsonify({"error": "Too many requests. Please try again later."}), 429
+
+    try:
+        # Structured prompt instructing the model to explain the concept and give a follow-up question
+        system_prompt = (
+            "You are an educational tutor for Physics, Maths, Chemistry, and Biology. "
+            "A learner made a mistake on a quiz. Please provide a targeted explanation including:\n"
+            "1. Why the selected answer is incorrect.\n"
+            "2. What core concept this maps to, explained simply.\n"
+            "3. One follow-up practice question (multiple choice) to test their understanding, "
+            "with a clearly indicated answer key/rubric."
+        )
+
+        prompt = (
+            f"{system_prompt}\n\n"
+            f"Topic: {topic}\n"
+            f"Question Text: {question}\n"
+            f"Learner's Selected Answer: {learner_answer}\n"
+            f"Correct Answer: {correct_answer}"
+        )
+
+        response = model.generate_content(prompt)
+
+        reply_text = ""
+        if response and getattr(response, "candidates", None):
+            cand0 = response.candidates[0] if response.candidates else None
+            parts = getattr(getattr(cand0, "content", None), "parts", None)
+            if parts and len(parts) > 0:
+                reply_text = getattr(parts[0], "text", None) or ""
+
+        if not reply_text:
+            reply_text = "I'm not sure how to explain this mistake. Let's review the main concept together."
+
+        return jsonify({"reply": format_response(reply_text)})
+
+    except Exception as e:
+        print(f"[ERROR] Mistake explanation error: {e}")
+        return (
+            jsonify({"reply": "An error occurred while generating the explanation. Please try again later."}),
+            500,
+        )
+
+
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(debug=debug_mode)

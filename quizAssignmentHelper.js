@@ -155,11 +155,107 @@
 
                 if (finalScore !== null && !isNaN(finalScore)) {
                     handleQuizCompletion(finalScore, totalQs);
+                    injectExplainMistakeButtons();
                 } else {
                     console.warn("LearnSphere: Could not determine final score for submission / tracking.");
                 }
             }, 100);
         };
+    }
+
+    function explainMistake(question, userAnswer, correctAnswer) {
+        const topicId = getTopicIdFromPath();
+        const payload = {
+            question: question,
+            userAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            topicId: topicId
+        };
+        localStorage.setItem("learnsphere_pending_explanation", JSON.stringify(payload));
+        
+        // Find path prefix
+        const path = window.location.pathname;
+        let prefix = "./";
+        if (path.includes("/quiz/") || path.includes("/mathsquiz/") || path.includes("/chemistryquiz/") || path.includes("/sub/")) {
+            prefix = "../";
+        }
+        window.location.href = prefix + "home.html?explain_mistake=true";
+    }
+
+    function injectExplainMistakeButtons() {
+        const incorrectDivs = document.querySelectorAll("#score .incorrect, #score div.incorrect, .incorrect");
+        incorrectDivs.forEach(div => {
+            if (div.querySelector(".explain-mistake-btn")) return; // already injected
+
+            const paragraphs = div.querySelectorAll("p");
+            let question = "";
+            let userAnswer = "";
+            let correctAnswer = "";
+
+            if (paragraphs.length > 0) {
+                // First paragraph is usually the question
+                question = paragraphs[0].textContent.replace(/^Q\d+:\s*/i, "").trim();
+            }
+
+            paragraphs.forEach(p => {
+                if (p.textContent.toLowerCase().includes("your answer:")) {
+                    const strong = p.querySelector("strong");
+                    userAnswer = strong ? strong.textContent.trim() : p.textContent.replace(/your answer:/i, "").trim();
+                }
+                if (p.textContent.toLowerCase().includes("correct answer is:")) {
+                    const strong = p.querySelector("strong");
+                    correctAnswer = strong ? strong.textContent.trim() : p.textContent.replace(/the correct answer is:/i, "").trim();
+                }
+            });
+
+            if (!question || !userAnswer || !correctAnswer) return;
+
+            const btn = document.createElement("button");
+            btn.className = "explain-mistake-btn";
+            btn.type = "button";
+            btn.innerHTML = `<i class="fa-solid fa-robot"></i> Ask AI to explain my mistake`;
+            
+            // Premium aesthetics styling
+            btn.style.marginTop = "12px";
+            btn.style.marginBottom = "8px";
+            btn.style.padding = "8px 16px";
+            btn.style.borderRadius = "6px";
+            btn.style.border = "1px solid var(--accent-color)";
+            btn.style.background = "rgba(56, 189, 248, 0.08)";
+            btn.style.color = "var(--accent-color)";
+            btn.style.fontWeight = "bold";
+            btn.style.cursor = "pointer";
+            btn.style.display = "inline-flex";
+            btn.style.alignItems = "center";
+            btn.style.gap = "8px";
+            btn.style.fontSize = "0.88rem";
+            btn.style.fontFamily = "inherit";
+            btn.style.transition = "all 0.2s ease";
+
+            btn.addEventListener("mouseenter", () => {
+                btn.style.background = "var(--accent-color)";
+                btn.style.color = "white";
+                btn.style.transform = "scale(1.02)";
+            });
+
+            btn.addEventListener("mouseleave", () => {
+                btn.style.background = "rgba(56, 189, 248, 0.08)";
+                btn.style.color = "var(--accent-color)";
+                btn.style.transform = "scale(1)";
+            });
+
+            btn.addEventListener("click", () => {
+                explainMistake(question, userAnswer, correctAnswer);
+            });
+
+            // Insert before the last <hr> if present
+            const hr = div.querySelector("hr");
+            if (hr) {
+                div.insertBefore(btn, hr);
+            } else {
+                div.appendChild(btn);
+            }
+        });
     }
 
     function init() {

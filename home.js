@@ -64,6 +64,28 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
+
+    // Check for explain_mistake redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("explain_mistake") === "true") {
+        // Remove param from address bar without reload
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+
+        const pending = localStorage.getItem("learnsphere_pending_explanation");
+        if (pending) {
+            localStorage.removeItem("learnsphere_pending_explanation");
+            try {
+                const payload = JSON.parse(pending);
+                // Wait slightly for UI/chatbot elements to settle
+                setTimeout(() => {
+                    triggerMistakeExplanation(payload);
+                }, 500);
+            } catch (e) {
+                console.warn("LearnSphere: Failed to parse pending mistake explanation.", e);
+            }
+        }
+    }
 });
 
 // ── Chatbot ───────────────────────────────────────────────────────────────────
@@ -99,6 +121,67 @@ function appendMessage(sender, text, cssClass = "") {
 
     chatBox.appendChild(msgEl);
     chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to latest message
+}
+
+/**
+ * Triggers a request to AI tutor to explain a quiz mistake.
+ */
+function triggerMistakeExplanation(payload) {
+    const { question, userAnswer, correctAnswer, topicId } = payload;
+    
+    // Format human-readable query
+    const queryText = `Can you explain the mistake I made on this question?\n\n` +
+                      `**Question:** ${question}\n` +
+                      `**My Answer:** ${userAnswer}\n` +
+                      `**Correct Answer:** ${correctAnswer}`;
+                      
+    appendMessage("You", queryText, "user-msg");
+
+    // Show typing indicator
+    const chatBox = document.getElementById("chat-box");
+    const typingEl = document.createElement("p");
+    typingEl.id = "typing-indicator";
+    typingEl.className = "typing-msg";
+    typingEl.textContent = "Bot is typing...";
+    chatBox.appendChild(typingEl);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch("http://127.0.0.1:5000/explain_mistake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            question: question,
+            learnerAnswer: userAnswer,
+            correctAnswer: correctAnswer,
+            topic: topicId || "general"
+        }),
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then((data) => {
+        const typing = document.getElementById("typing-indicator");
+        if (typing) typing.remove();
+
+        const reply = data.reply || "Sorry, I couldn't generate an explanation.";
+        appendMessage("Bot", reply, "bot-msg");
+
+        // Save last explanation per topic in localStorage for quick access
+        localStorage.setItem(`learnsphere_last_explanation_${topicId || 'general'}`, reply);
+    })
+    .catch((error) => {
+        console.error("Explain mistake error:", error);
+        const typing = document.getElementById("typing-indicator");
+        if (typing) typing.remove();
+        appendMessage(
+            "Bot",
+            "⚠️ Unable to connect to the AI tutor. Please ensure the backend server is running.",
+            "bot-msg error-msg"
+        );
+    });
 }
 
 /**
