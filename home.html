@@ -144,6 +144,89 @@
             outline: 2px solid var(--accent-color);
             outline-offset: 2px;
         }
+
+        /* ── Course Assignments ─────────────────────────────────────────── */
+        .assignment-card {
+            background: var(--progress-item-bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 10px 0;
+            border-left: 4px solid var(--accent-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            transition: var(--theme-transition);
+            text-align: left;
+        }
+        .assignment-card.completed {
+            border-left-color: var(--completed-color);
+        }
+        .assignment-card.overdue {
+            border-left-color: #ef4444;
+        }
+        .assignment-info {
+            flex: 1;
+        }
+        .assignment-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .difficulty-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .difficulty-badge.easy {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        .difficulty-badge.medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        .difficulty-badge.hard {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        .assignment-status-badge {
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid currentColor;
+            display: inline-block;
+        }
+        .assignment-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .assignment-btn {
+            background: var(--btn-primary-bg);
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--theme-transition);
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+        .assignment-btn:hover {
+            background: var(--btn-primary-hover);
+            transform: scale(1.03);
+        }
     </style>
     <script src="theme.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -161,6 +244,14 @@
             <a href="sub/chemistry.html" class="button">🧪 Chemistry</a>
             <a href="sub/biology.html" class="button">🧬 Biology</a>
         </div>
+
+        <!-- Course Assignments Section -->
+        <section class="progress-overview" aria-labelledby="assignments-heading">
+            <h2 id="assignments-heading">📝 Course Assignments</h2>
+            <div id="assignmentsList" style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+                <p style="color: var(--text-muted); text-align: center; margin: 12px 0;">Loading assignments...</p>
+            </div>
+        </section>
 
         <!-- Study Progress Section -->
         <section class="progress-overview" aria-labelledby="progress-heading">
