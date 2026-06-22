@@ -171,7 +171,16 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
 
 function getStreak() {
   const state = _loadState();
-  return state.streak || { lastPracticeDate: null, currentStreak: 0 };
+  const s = state.streak || { lastPracticeDate: null, currentStreak: 0 };
+  if (s.lastPracticeDate) {
+    const today = _todayLocalISODate();
+    const todayToken = _parseISODateToUTCStart(today);
+    const prevToken = _parseISODateToUTCStart(s.lastPracticeDate);
+    if (todayToken > prevToken + 1) {
+      return { lastPracticeDate: s.lastPracticeDate, currentStreak: 0 };
+    }
+  }
+  return s;
 }
 
 function getTopicStats(topicId) {

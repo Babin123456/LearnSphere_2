@@ -41,6 +41,20 @@
       }
     },
     {
+      id: "three_day_streak",
+      title: "3-day practice streak",
+      description: "Practice every day for 3 days.",
+      icon: "⚡",
+      getProgress: (stats) => {
+        const target = 3;
+        const done = stats.currentStreak || 0;
+        return {
+          unlocked: done >= target,
+          progressText: `${Math.min(done, target)}/${target}`
+        };
+      }
+    },
+    {
       id: "seven_day_streak",
       title: "7-day practice streak",
       description: "Practice every day for 7 days.",
@@ -55,6 +69,46 @@
       }
     },
     {
+      id: "fourteen_day_streak",
+      title: "14-day practice streak",
+      description: "Practice every day for 14 days.",
+      icon: "👑",
+      getProgress: (stats) => {
+        const target = 14;
+        const done = stats.currentStreak || 0;
+        return {
+          unlocked: done >= target,
+          progressText: `${Math.min(done, target)}/${target}`
+        };
+      }
+    },
+    {
+      id: "weekend_warrior",
+      title: "Weekend Warrior",
+      description: "Complete a quiz on a weekend (Saturday or Sunday).",
+      icon: "⚔️",
+      getProgress: (stats) => {
+        const unlocked = !!stats.hasWeekendAttempt;
+        return {
+          unlocked,
+          progressText: unlocked ? "Unlocked" : "0/1"
+        };
+      }
+    },
+    {
+      id: "weekly_badge",
+      title: "Weekly Scholar",
+      description: "Complete at least one quiz this week.",
+      icon: "🎓",
+      getProgress: (stats) => {
+        const unlocked = !!stats.hasWeeklyAttempt;
+        return {
+          unlocked,
+          progressText: unlocked ? "Unlocked" : "0/1"
+        };
+      }
+    },
+    {
       id: "ninety_percent_accuracy",
       title: "90%+ accuracy",
       description: "Maintain 90% accuracy across your attempts.",
@@ -65,7 +119,6 @@
         const acc = stats.overallAccuracy;
         const unlocked = typeof acc === "number" && acc >= target && total > 0;
 
-        // For progress text, show either current acc or 0/1.
         let progressText;
         if (total <= 0 || typeof acc !== "number") {
           progressText = "No attempts";
@@ -106,6 +159,15 @@
     return typeof n === "number" && !Number.isNaN(n) ? n : null;
   }
 
+  function getWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getFullYear()}-W${weekNo}`;
+  }
+
   function buildStatsFromQuizProgress() {
     if (!window.quizProgress) {
       return {
@@ -113,7 +175,9 @@
         topicAttemptedCount: 0,
         currentStreak: 0,
         overallAccuracy: null,
-        overallTotalAnswers: 0
+        overallTotalAnswers: 0,
+        hasWeekendAttempt: false,
+        hasWeeklyAttempt: false
       };
     }
 
@@ -123,7 +187,7 @@
     // Overall accuracy
     const overall = window.quizProgress.getOverallAccuracy ? window.quizProgress.getOverallAccuracy() : { accuracy: null, total: 0 };
 
-    // Topic completion proxy: count of topics with at least 1 quiz attempt
+    // Topic completion proxy
     const byTopic = window.quizProgress.getAllTopicStats ? window.quizProgress.getAllTopicStats() : {};
     const topics = window.quizProgress.QUIZ_TOPICS || [];
     let topicAttemptedCount = 0;
@@ -133,21 +197,170 @@
       if (attempts >= 1) topicAttemptedCount++;
     }
 
-    // Attempt count (best effort): derived from topic stats totals
-    // (quizProgress stores attempt list, but we don't have direct getter)
-    // So estimate by summing per-topic attempts.
     let attemptCount = 0;
     for (const tId of Object.keys(byTopic || {})) {
       attemptCount += (byTopic[tId]?.attempts || 0);
     }
+
+    // Load raw attempts from localStorage for weekend/weekly checks
+    let attempts = [];
+    try {
+      const raw = localStorage.getItem(QUIZ_PROGRESS_KEY);
+      if (raw) {
+        attempts = JSON.parse(raw).attempts || [];
+      }
+    } catch (e) {}
+
+    const currentWeek = getWeekNumber(new Date());
+    let hasWeekendAttempt = false;
+    let hasWeeklyAttempt = false;
+
+    attempts.forEach(a => {
+      if (!a.finishedAt) return;
+      const d = new Date(a.finishedAt);
+      const day = d.getDay();
+      if (day === 0 || day === 6) {
+        hasWeekendAttempt = true;
+      }
+      if (getWeekNumber(a.finishedAt) === currentWeek) {
+        hasWeeklyAttempt = true;
+      }
+    });
 
     return {
       attemptCount,
       topicAttemptedCount,
       currentStreak: safeNumber(streak?.currentStreak) ?? 0,
       overallAccuracy: overall?.accuracy == null ? null : safeNumber(overall.accuracy),
-      overallTotalAnswers: safeNumber(overall?.total) ?? 0
+      overallTotalAnswers: safeNumber(overall?.total) ?? 0,
+      hasWeekendAttempt,
+      hasWeeklyAttempt
     };
+  }
+
+  function ensureToastStyles() {
+    if (document.getElementById("badge-toast-styles")) return;
+    const style = document.createElement("style");
+    style.id = "badge-toast-styles";
+    style.textContent = `
+      .badge-toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+      }
+      .badge-toast {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(102, 252, 241, 0.35);
+        border-radius: 12px;
+        padding: 14px 18px;
+        width: 320px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(102, 252, 241, 0.2);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        pointer-events: auto;
+        animation: toast-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .badge-toast.fade-out {
+        animation: toast-fade-out 0.3s ease forwards;
+      }
+      .badge-toast-icon {
+        font-size: 28px;
+        background: rgba(102, 252, 241, 0.1);
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(102, 252, 241, 0.25);
+        flex-shrink: 0;
+      }
+      .badge-toast-details {
+        flex: 1;
+        min-width: 0;
+      }
+      .badge-toast-title {
+        color: #66fcf1;
+        font-weight: 800;
+        font-size: 0.95rem;
+        margin: 0 0 4px 0;
+        text-shadow: 0 0 8px rgba(102, 252, 241, 0.4);
+      }
+      .badge-toast-desc {
+        color: #cbd5e1;
+        font-size: 0.8rem;
+        margin: 0;
+        line-height: 1.3;
+      }
+      @keyframes toast-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      @keyframes toast-fade-out {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function showUnlockToast(badge) {
+    ensureToastStyles();
+    
+    let container = document.getElementById("badge-toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "badge-toast-container";
+      container.className = "badge-toast-container";
+      document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement("div");
+    toast.className = "badge-toast";
+    toast.setAttribute("role", "alert");
+    
+    toast.innerHTML = `
+      <div class="badge-toast-icon">${badge.icon}</div>
+      <div class="badge-toast-details">
+        <h4 class="badge-toast-title">Achievement Unlocked!</h4>
+        <p class="badge-toast-desc"><strong>${badge.title}</strong>: ${badge.description}</p>
+      </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    console.log(`LearnSphere Achievement Unlocked: ${badge.title}`);
+    
+    setTimeout(() => {
+      toast.classList.add("fade-out");
+      toast.addEventListener("animationend", () => {
+        toast.remove();
+        if (container.children.length === 0) {
+          container.remove();
+        }
+      });
+    }, 4500);
   }
 
   function unlockNewBadges(ach, stats) {
@@ -164,6 +377,32 @@
 
     if (changed) saveAchievements(ach);
     return ach;
+  }
+
+  function checkAndNotify() {
+    const stats = buildStatsFromQuizProgress();
+    const ach = loadAchievements();
+    
+    let changed = false;
+    const newlyUnlocked = [];
+
+    for (const badge of BADGES) {
+      const already = !!ach.unlocked[badge.id];
+      const prog = badge.getProgress(stats);
+      if (!already && prog.unlocked) {
+        ach.unlocked[badge.id] = { unlockedAt: new Date().toISOString() };
+        newlyUnlocked.push(badge);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      saveAchievements(ach);
+      newlyUnlocked.forEach(badge => {
+        showUnlockToast(badge);
+      });
+    }
+    return newlyUnlocked;
   }
 
   function badgeCardHTML(badge, unlocked, progressText) {
@@ -192,7 +431,6 @@
     if (containerEl.dataset.badgesStylesApplied === "true") return;
     containerEl.dataset.badgesStylesApplied = "true";
 
-    // Minimal inline styles so we don't touch global CSS too much.
     const style = document.createElement("style");
     style.textContent = `
       .badges-grid {
@@ -247,7 +485,8 @@
 
   window.achievements = {
     BADGES,
-    renderBadges
+    renderBadges,
+    checkAndNotify
   };
 })();
 

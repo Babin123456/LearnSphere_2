@@ -279,6 +279,21 @@
         <!-- Achievements & Badges Section -->
         <section class="progress-overview" aria-labelledby="badges-heading">
             <h2 id="badges-heading">🏅 Achievements & Badges</h2>
+
+            <!-- Streak Progress card -->
+            <div id="streakProgressCard" style="background: var(--progress-item-bg); border-radius: 10px; padding: 16px; margin-bottom: 20px; border-left: 4px solid var(--in-progress-color); text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 1.05rem; font-weight: 700; color: var(--accent-color); display: flex; align-items: center; gap: 6px;">
+                        <span>🔥</span> Daily Practice Streak
+                    </span>
+                    <span id="streakDaysText" style="font-size: 1.1rem; font-weight: 800; color: #fff;">0 Days</span>
+                </div>
+                <div class="progress-bar-track" style="margin-top: 12px; height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden;">
+                    <div id="streakProgressBarFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff8c00, #ff4500); border-radius: 5px; transition: width 0.5s ease;"></div>
+                </div>
+                <p id="streakNextMilestoneText" style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0 0 0;"></p>
+            </div>
+
             <div id="badgesContainerHome"></div>
             <div style="font-size:0.85rem; color: var(--text-muted); margin-top:10px;">
                 Unlock milestones based on quiz attempts, practice streak, and accuracy.

@@ -30,6 +30,40 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.achievements?.renderBadges) {
         window.achievements.renderBadges("badgesContainerHome");
     }
+
+    // Render Daily Streak stats
+    if (window.quizProgress && typeof window.quizProgress.getStreak === "function") {
+        const streak = window.quizProgress.getStreak();
+        const days = streak.currentStreak || 0;
+        
+        const daysEl = document.getElementById("streakDaysText");
+        const barFillEl = document.getElementById("streakProgressBarFill");
+        const descEl = document.getElementById("streakNextMilestoneText");
+        
+        if (daysEl) daysEl.textContent = `${days} Day${days !== 1 ? 's' : ''}`;
+        
+        // Find next milestone
+        let nextMilestone = 3;
+        if (days >= 14) nextMilestone = 30;
+        else if (days >= 7) nextMilestone = 14;
+        else if (days >= 3) nextMilestone = 7;
+        
+        const pct = Math.min(100, Math.round((days / nextMilestone) * 100));
+        if (barFillEl) barFillEl.style.width = `${pct}%`;
+        
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const practicedToday = streak.lastPracticeDate === todayStr;
+        
+        if (descEl) {
+            if (practicedToday) {
+                descEl.innerHTML = `🔥 Streak safe for today! Practice tomorrow to build toward your <strong>${nextMilestone}-day</strong> milestone.`;
+            } else if (days > 0) {
+                descEl.innerHTML = `⚡ Practice today to keep your streak alive and reach your <strong>${nextMilestone}-day</strong> milestone!`;
+            } else {
+                descEl.innerHTML = `🏁 Start a quiz today to begin your daily practice streak! Next milestone: <strong>3 days</strong>.`;
+            }
+        }
+    }
 });
 
 // ── Chatbot ───────────────────────────────────────────────────────────────────
