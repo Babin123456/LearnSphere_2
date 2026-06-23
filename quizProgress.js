@@ -248,16 +248,40 @@ function getAccuracySeries({ days = 14 } = {}) {
   const byToken = new Map();
   tokens.forEach(t => byToken.set(t, { correct: 0, total: 0 }));
 
+  function toFiniteNumber(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   attempts.forEach(a => {
     if (!a.practiceDate) return;
     const token = _parseISODateToUTCStart(a.practiceDate);
     if (!byToken.has(token)) return;
-    if (typeof a.correctCount === "number" && typeof a.totalQuestions === "number") {
+
+    const total = toFiniteNumber(a.totalQuestions);
+    if (total === null || total <= 0) return;
+
+    // Priority 1: correctCount
+    const correctFromCount = toFiniteNumber(a.correctCount);
+    if (correctFromCount !== null) {
       const bucket = byToken.get(token);
-      bucket.correct += a.correctCount;
-      bucket.total += a.totalQuestions;
+      bucket.correct += correctFromCount;
+      bucket.total += total;
       byToken.set(token, bucket);
+      return;
     }
+
+    // Priority 2: attempt-level accuracy (already computed in recordAttempt)
+    const acc = toFiniteNumber(a.accuracy);
+    if (acc !== null) {
+      const bucket = byToken.get(token);
+      bucket.correct += acc * total;
+      bucket.total += total;
+      byToken.set(token, bucket);
+      return;
+    }
+
+    // Otherwise we cannot safely infer correctness for chart aggregation.
   });
 
   const accuracyByDay = tokens.map(t => {
@@ -274,12 +298,31 @@ function getOverallAccuracy() {
   const attempts = state.attempts || [];
   let correct = 0;
   let total = 0;
+
+  function toFiniteNumber(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   for (const a of attempts) {
-    if (typeof a.correctCount === "number" && typeof a.totalQuestions === "number") {
-      correct += a.correctCount;
-      total += a.totalQuestions;
+    const totalQ = toFiniteNumber(a.totalQuestions);
+    if (totalQ === null || totalQ <= 0) continue;
+
+    const correctFromCount = toFiniteNumber(a.correctCount);
+    if (correctFromCount !== null) {
+      correct += correctFromCount;
+      total += totalQ;
+      continue;
+    }
+
+    // Fallback: use attempt-level accuracy if present.
+    const acc = toFiniteNumber(a.accuracy);
+    if (acc !== null) {
+      correct += acc * totalQ;
+      total += totalQ;
     }
   }
+
   if (total <= 0) return { accuracy: null, correct, total };
   return { accuracy: correct / total, correct, total };
 }
