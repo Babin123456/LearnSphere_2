@@ -178,7 +178,7 @@ function init() {
   }
 }
 
-function initReviewQueueWidget() {
+  function initReviewQueueWidget() {
   const widget = document.getElementById("reviewQueueWidget");
   if (!widget) return;
 
@@ -206,6 +206,7 @@ function initReviewQueueWidget() {
     "chemistry-thermo",
   ];
 
+  // Use the same day-token rules as spaced repetition logic in progress.js/review.js.
   function todayLocalISODate() {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -220,8 +221,7 @@ function initReviewQueueWidget() {
     return Math.floor(dt.getTime() / 86400000);
   }
 
-  const today = todayLocalISODate();
-  const todayToken = parseISODateToUTCStart(today);
+  const todayToken = parseISODateToUTCStart(todayLocalISODate());
 
   let dueCount = 0;
   const nextDates = [];
@@ -231,11 +231,8 @@ function initReviewQueueWidget() {
     if (!s || !s.nextReviewDate) continue;
 
     const nextToken = parseISODateToUTCStart(s.nextReviewDate);
-    if (todayToken >= nextToken) {
-      dueCount += 1;
-    } else {
-      nextDates.push(s.nextReviewDate);
-    }
+    if (todayToken >= nextToken) dueCount += 1;
+    else nextDates.push(s.nextReviewDate);
   }
 
   if (dueCount > 0) {
@@ -253,6 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.achievements.renderBadges("badgesContainerMyProgress");
   }
 });
+
 
 
 
