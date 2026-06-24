@@ -9,10 +9,8 @@ const CACHE_NAME = `learnsphere-static-${CACHE_VERSION}`;
 
 // For runtime image caching
 const RUNTIME_IMAGE_CACHE_NAME = `learnsphere-images-${CACHE_VERSION}`;
-const MAX_IMAGE_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-
-// App shell URLs to cache at install time.
+// App shell URLs
 // Keep this list conservative; runtime caching covers the rest.
 const APP_SHELL_URLS = [
   // Quiz pages (offline-first)
