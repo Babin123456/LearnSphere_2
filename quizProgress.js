@@ -218,24 +218,36 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
         if (taxonomyMatch) {
           const sId = taxonomyMatch.skillId;
           if (!state.mastery[sId]) {
-            state.mastery[sId] = { attempts: 0, correct: 0, lastAttemptAt: 0 };
+            state.mastery[sId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
           }
           state.mastery[sId].attempts += 1;
           if (isCorrect) {
             state.mastery[sId].correct += 1;
           }
           state.mastery[sId].lastAttemptAt = now;
+          if (window.isWeaknessFocusMode) {
+            state.mastery[sId].weaknessAttempts = (state.mastery[sId].weaknessAttempts || 0) + 1;
+            if (isCorrect) {
+              state.mastery[sId].weaknessCorrect = (state.mastery[sId].weaknessCorrect || 0) + 1;
+            }
+          }
         } else {
           // Fallback to topic-general skill if not mapped explicitly
           const fallbackSkillId = topicId + "-general";
           if (!state.mastery[fallbackSkillId]) {
-            state.mastery[fallbackSkillId] = { attempts: 0, correct: 0, lastAttemptAt: 0 };
+            state.mastery[fallbackSkillId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
           }
           state.mastery[fallbackSkillId].attempts += 1;
           if (isCorrect) {
             state.mastery[fallbackSkillId].correct += 1;
           }
           state.mastery[fallbackSkillId].lastAttemptAt = now;
+          if (window.isWeaknessFocusMode) {
+            state.mastery[fallbackSkillId].weaknessAttempts = (state.mastery[fallbackSkillId].weaknessAttempts || 0) + 1;
+            if (isCorrect) {
+              state.mastery[fallbackSkillId].weaknessCorrect = (state.mastery[fallbackSkillId].weaknessCorrect || 0) + 1;
+            }
+          }
         }
       }
     });
@@ -316,11 +328,11 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
     totalQuestions: total,
     correctCount: correct,
     accuracy: total > 0 && typeof correct === "number" && Number.isFinite(correct) ? correct / total : null,
-
     timeTakenMs: timeMs,
     startedAt: null,
     finishedAt: now,
     practiceDate: today,
+    isWeaknessFocus: window.isWeaknessFocusMode || false,
   });
 
   // Keep attempts bounded
@@ -562,6 +574,20 @@ function getWeakestSkills({ limit = 3 } = {}) {
   return skillsList.slice(0, limit);
 }
 
+function getQuestionWeaknessWeight(q) {
+  if (!q || !q.question) return 0.5;
+  const qText = q.question.trim();
+  const tax = SKILL_TAXONOMY[qText];
+  if (!tax) return 0.5;
+  
+  const stats = getMasteryStats();
+  const m = stats[tax.skillId];
+  if (!m || m.attempts === 0) return 0.5;
+  
+  const accuracy = m.correct / m.attempts;
+  return 1.0 - accuracy;
+}
+
 window.quizProgress = {
   QUIZ_TOPICS,
   SKILL_TAXONOMY,
@@ -574,5 +600,6 @@ window.quizProgress = {
   getRecommendedTopics,
   getMasteryStats,
   getWeakestSkills,
+  getQuestionWeaknessWeight,
 };
 
