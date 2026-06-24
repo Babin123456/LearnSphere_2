@@ -211,12 +211,75 @@
     </div>
 
     <div class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">Export Progress</h2>
+      <p class="muted" style="font-size:13px; margin-top:6px;">
+        Generate a report for parents/teachers. Export is local (no backend calls).
+      </p>
+
+      <div class="export-actions" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-start; margin-top:14px;">
+        <button id="downloadProgressJsonBtn" class="export-btn" type="button">Download JSON</button>
+        <button id="printProgressBtn" class="export-btn" type="button">Print / Save as PDF</button>
+      </div>
+
+      <!-- Print-only report container -->
+      <div id="printReport" class="print-report" style="display:none; margin-top:18px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; gap:16px; align-items:flex-start; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:12px;">
+          <div>
+            <div style="font-size:16px; font-weight:800;">LearnSphere — Progress Report</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">Generated for Parents/Teachers</div>
+          </div>
+          <div class="muted" style="font-size:12px;">{{generatedAt}}</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:14px;">
+          <div style="border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px;">
+            <div class="muted" style="font-size:12px;">Current Streak</div>
+            <div style="font-size:22px; font-weight:800; margin-top:6px;" id="printStreakValue">—</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;" id="printStreakMeta">—</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px;">
+            <div class="muted" style="font-size:12px;">Overall Accuracy</div>
+            <div style="font-size:22px; font-weight:800; margin-top:6px;" id="printOverallAccuracyValue">—</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;" id="printOverallAccuracyMeta">—</div>
+          </div>
+        </div>
+
+        <div style="border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; margin-top:12px;">
+          <div style="font-size:14px; font-weight:800;">Accuracy Trend (Last 14 days)</div>
+          <div class="muted" style="font-size:12px; margin-top:4px;">See the plotted line chart from this page.</div>
+          <div style="margin-top:10px;">
+            <canvas id="printAccuracyChart" width="760" height="240"></canvas>
+          </div>
+        </div>
+
+        <div style="border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; margin-top:12px;">
+          <div style="font-size:14px; font-weight:800;">Weak Concepts (Top 3)</div>
+          <div id="printWeakSkills" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <div style="border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; margin-top:12px;">
+          <div style="font-size:14px; font-weight:800;">Topic-wise Performance</div>
+          <div id="printTopicStats" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div class="muted" style="font-size:12px;">Export note: This report is generated from local stats stored in your browser.</div>
+        </div>
+      </div>
+
+      <div class="muted" style="font-size:13px; margin-top:10px">
+        Tip: Use Print to generate a PDF. Export formats (JSON + PDF) are compatible with backend ingestion later.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
       <h2 style="margin-top:0">🏅 Achievements & Badges</h2>
       <div id="badgesContainerMyProgress"></div>
       <div class="muted" style="font-size:13px; margin-top:10px">
         Unlock milestones based on quiz attempts, streak, and accuracy.
       </div>
     </div>
+
 
     <div class="card" style="margin-top:16px">
       <h2 style="margin-top:0">🗓️ Review queue</h2>
@@ -229,9 +292,11 @@
 
   <script src="progress.js"></script>
   <script src="quizProgress.js"></script>
+  <script src="exportProgress.js"></script>
   <script src="badges.js"></script>
   <script src="my_progress.js"></script>
   <script src="navbar.js"></script>
+
 
 
 

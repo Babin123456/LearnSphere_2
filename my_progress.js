@@ -437,10 +437,209 @@ document.addEventListener("DOMContentLoaded", () => {
   init();
   initMasteryDashboard();
   initReviewQueueWidget();
+
+  // Export Progress UI wiring
+  const downloadBtn = document.getElementById("downloadProgressJsonBtn");
+  const printBtn = document.getElementById("printProgressBtn");
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      if (!window.exportProgress?.buildProgressExportPayload || !window.exportProgress?.downloadJson) return;
+      const payload = window.exportProgress.buildProgressExportPayload({
+        formatVersion: { major: 1, minor: 0 },
+        roleContext: "learner"
+      });
+      window.exportProgress.downloadJson(payload, "learnsphere_progress_export.json");
+    });
+  }
+
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      window.print();
+    });
+  }
+
+  // Populate print-only report container before printing.
+  window.addEventListener("beforeprint", () => {
+    try {
+      const container = document.getElementById("printReport");
+      if (!container) return;
+
+      const generatedAt = container.querySelector(".muted")?.textContent || "";
+      const payload = window.exportProgress?.buildProgressExportPayload?.({
+        formatVersion: { major: 1, minor: 0 },
+        roleContext: "learner"
+      });
+
+      // Set generatedAt (first occurrence of {{generatedAt}} in the inline template)
+      const headerMuteds = container.querySelectorAll(".muted");
+      // Best-effort: update any text that looks like the placeholder.
+      headerMuteds.forEach(el => {
+        if (el.textContent && el.textContent.includes("{{generatedAt}}")) {
+          el.textContent = payload?.generatedAt || new Date().toISOString();
+        }
+      });
+
+      const streakValue = document.getElementById("streakValue");
+      const streakMeta = document.getElementById("streakMeta");
+      const overallAccValue = document.getElementById("overallAccuracyValue");
+      const overallAccMeta = document.getElementById("overallAccuracyMeta");
+
+      const pStreakValue = document.getElementById("printStreakValue");
+      const pStreakMeta = document.getElementById("printStreakMeta");
+      const pOverallAccValue = document.getElementById("printOverallAccuracyValue");
+      const pOverallAccMeta = document.getElementById("printOverallAccuracyMeta");
+
+      if (pStreakValue && streakValue) pStreakValue.textContent = streakValue.textContent || "—";
+      if (pStreakMeta && streakMeta) pStreakMeta.textContent = streakMeta.textContent || "—";
+      if (pOverallAccValue && overallAccValue) pOverallAccValue.textContent = overallAccValue.textContent || "—";
+      if (pOverallAccMeta && overallAccMeta) pOverallAccMeta.textContent = overallAccMeta.textContent || "—";
+
+      // Weak skills
+      const printWeakSkills = document.getElementById("printWeakSkills");
+      if (printWeakSkills && window.quizProgress?.getWeakestSkills) {
+        const weak = window.quizProgress.getWeakestSkills({ limit: 3 }) || [];
+        printWeakSkills.innerHTML = "";
+        weak.forEach(ws => {
+          const accTxt = ws.attempts > 0 && ws.accuracy != null ? `${Math.round(ws.accuracy * 100)}%` : "Not attempted";
+          const el = document.createElement("div");
+          el.style.border = "1px solid rgba(255,255,255,0.12)";
+          el.style.borderRadius = "10px";
+          el.style.padding = "10px 12px";
+          el.style.background = "rgba(255,255,255,0.02)";
+          el.innerHTML = `
+            <div style="font-weight:800;">${ws.label}</div>
+            <div class="muted" style="font-size:12px; margin-top:4px;">Accuracy: <b style="color:#66fcf1;">${accTxt}</b> ${ws.attempts ? `(${ws.attempts} attempts)` : ""}</div>
+          `;
+          printWeakSkills.appendChild(el);
+        });
+      }
+
+      // Topic stats (top 8 by attempts)
+      const printTopicStats = document.getElementById("printTopicStats");
+      if (printTopicStats && window.quizProgress?.getAllTopicStats && window.quizProgress?.QUIZ_TOPICS) {
+        const byTopic = window.quizProgress.getAllTopicStats() || {};
+        const topics = window.quizProgress.QUIZ_TOPICS || [];
+        const rows = topics
+          .map(t => {
+            const agg = byTopic[t.id] || {};
+            const attempts = agg.attempts || 0;
+            const qTotal = agg.questionsTotal || 0;
+            const correctTotal = agg.correctTotal || 0;
+            const accuracy = qTotal > 0 ? (correctTotal / qTotal) : null;
+            return { topicId: t.id, label: t.label, attempts, questionsTotal: qTotal, accuracy };
+          })
+          .sort((a, b) => b.attempts - a.attempts)
+          .slice(0, 8);
+
+        printTopicStats.innerHTML = "";
+        rows.forEach(r => {
+          const accTxt = r.accuracy == null ? "—" : `${Math.round(r.accuracy * 100)}%`;
+          const barW = r.accuracy == null ? 0 : Math.max(0, Math.min(100, Math.round(r.accuracy * 100)));
+
+          const el = document.createElement("div");
+          el.style.border = "1px solid rgba(255,255,255,0.12)";
+          el.style.borderRadius = "10px";
+          el.style.padding = "10px 12px";
+          el.style.background = "rgba(255,255,255,0.02)";
+          el.innerHTML = `
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+              <div style="font-weight:800;">${r.label}</div>
+              <div class="muted" style="font-size:12px;">${accTxt} • ${r.attempts} attempts</div>
+            </div>
+            <div style="margin-top:8px; height:8px; border-radius:999px; background: rgba(255,255,255,0.07); overflow:hidden;">
+              <div style="height:100%; width:${barW}%; background:#66fcf1;"></div>
+            </div>
+          `;
+          printTopicStats.appendChild(el);
+        });
+      }
+
+      // Accuracy chart for print: re-draw using canvas inside printReport.
+      const printCanvas = document.getElementById("printAccuracyChart");
+      if (printCanvas && window.quizProgress?.getAccuracySeries) {
+        const series = window.quizProgress.getAccuracySeries({ days: 14 }) || null;
+        if (series?.labels && Array.isArray(series.accuracyByDay)) {
+          const ctx = printCanvas.getContext("2d");
+          // Basic redraw (simplified) to avoid importing canvas helpers.
+          ctx.clearRect(0, 0, printCanvas.width, printCanvas.height);
+
+          // Grid
+          ctx.strokeStyle = "rgba(255,255,255,0.08)";
+          ctx.lineWidth = 1;
+          for (let i = 1; i <= 4; i++) {
+            const y = (printCanvas.height / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(printCanvas.width, y);
+            ctx.stroke();
+          }
+
+          const marginTop = 16;
+          const marginBottom = 24;
+          const usable = printCanvas.height - marginTop - marginBottom;
+          const toY = (acc) => marginTop + (1 - acc) * usable;
+
+          const labels = series.labels;
+          const xStep = printCanvas.width / (labels.length - 1);
+
+          // Line
+          ctx.strokeStyle = "#66fcf1";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < series.accuracyByDay.length; i++) {
+            const a = series.accuracyByDay[i];
+            if (typeof a !== "number") continue;
+            const x = i * xStep;
+            const y = toY(a);
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.stroke();
+
+          // Points
+          ctx.fillStyle = "#66fcf1";
+          for (let i = 0; i < series.accuracyByDay.length; i++) {
+            const a = series.accuracyByDay[i];
+            if (typeof a !== "number") continue;
+            const x = i * xStep;
+            const y = toY(a);
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+
+          // X labels
+          ctx.fillStyle = "rgba(255,255,255,0.65)";
+          ctx.font = "12px Arial";
+          const stride = Math.max(1, Math.floor(labels.length / 6));
+          for (let i = 0; i < labels.length; i++) {
+            if (i % stride !== 0 && i !== labels.length - 1) continue;
+            ctx.fillText(labels[i], i * xStep - 10, printCanvas.height - 8);
+          }
+        }
+      }
+
+      // Ensure print-only container becomes visible for the printer.
+      container.style.display = "block";
+    } catch {}
+  });
+
+  window.addEventListener("afterprint", () => {
+    const container = document.getElementById("printReport");
+    if (container) container.style.display = "none";
+  });
+
   if (window.achievements?.renderBadges) {
     window.achievements.renderBadges("badgesContainerMyProgress");
   }
 });
+
 
 
 
