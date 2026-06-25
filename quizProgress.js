@@ -660,6 +660,13 @@ function _updateUnifiedStreakAndGoal(type, value = 1) {
   }
 }
 
+function getAttemptsHistory() {
+  const state = _loadState();
+  const attempts = Array.isArray(state?.attempts) ? state.attempts : [];
+  // Return a copy to avoid accidental mutation
+  return attempts.slice();
+}
+
 window.quizProgress = {
   QUIZ_TOPICS,
   SKILL_TAXONOMY,
@@ -674,6 +681,7 @@ window.quizProgress = {
   getWeakestSkills,
   getQuestionWeaknessWeight,
   recordRetryAttempt,
+  getAttemptsHistory,
 };
 
 

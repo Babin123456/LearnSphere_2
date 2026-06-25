@@ -40,16 +40,28 @@ const STATE_COLORS = {
 };
 
 const STORAGE_KEY = "learnsphere_progress";
+// XP system constants
+const XP_PER_LEVEL = 1000; // XP required per level
 const REVIEW_SCHEDULE_KEY = "learnsphere_review_schedule_v1";
 
 // ── Storage Helpers ───────────────────────────────────────────────────────────
 
 function loadProgress() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        // Ensure XP and level fields exist
+        if (typeof data.xp !== "number") data.xp = 0;
+        if (typeof data.level !== "number") data.level = 0;
+        return data;
     } catch {
-        return {};
+        return { xp: 0, level: 0 };
     }
+}
+
+// Helper to calculate level from XP
+function calculateLevel(xp) {
+    if (typeof xp !== "number" || xp < 0) return 0;
+    return Math.floor(xp / XP_PER_LEVEL);
 }
 
 function loadReviewSchedule() {
@@ -71,6 +83,9 @@ function saveReviewSchedule(scheduleMap) {
 
 function saveProgress(progressMap) {
     try {
+        // Ensure XP and level are persisted
+        if (typeof progressMap.xp !== "number") progressMap.xp = 0;
+        if (typeof progressMap.level !== "number") progressMap.level = 0;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(progressMap));
     } catch (e) {
         console.warn("LearnSphere: Could not save progress to localStorage.", e);
@@ -281,6 +296,17 @@ function updateProgressSummary() {
 
 window.studyProgress = {
     STREAK_KEY: "learnsphere_streak_state_v1",
+    // XP related helpers
+    addXP(amount) {
+        const progress = loadProgress();
+        const inc = Number(amount) || 0;
+        progress.xp = (progress.xp || 0) + inc;
+        progress.level = calculateLevel(progress.xp);
+        saveProgress(progress);
+    },
+    getXP() { return (loadProgress().xp) || 0; },
+    getLevel() { return (loadProgress().level) || 0; },
+    XP_PER_LEVEL,
 
     loadStreakState() {
         try {

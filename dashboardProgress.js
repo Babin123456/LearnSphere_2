@@ -11,6 +11,13 @@
  */
 
 (function () {
+  /**
+   * Progress Analytics Dashboard (extended)
+   * - Rolling average score + best score (from attempts history)
+   * - Mastery per category (subject)
+   * - Time spent per quiz (from attempts history)
+   * - Filters: date range + subject
+   */
   function pct(n) {
     if (typeof n !== "number" || Number.isNaN(n)) return "—";
     return `${Math.round(n * 100)}%`;
