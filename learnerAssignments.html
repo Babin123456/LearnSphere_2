@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Assignments – LearnSphere</title>
+  <link rel="stylesheet" href="variables.css" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="navbar" role="banner">
+    <div class="logo"><a href="index.html" aria-label="LearnSphere Home">LearnSphere</a></div>
+
+    <button
+      class="hamburger"
+      id="hamburgerBtn"
+      aria-label="Toggle navigation menu"
+      aria-expanded="false"
+      aria-controls="navMenu"
+    >
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav id="navMenu" role="navigation" aria-label="Main navigation">
+      <ul>
+        <li><a href="explore.html">Explore</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="review.html">Review Queue</a></li>
+        <li><a href="resources.html">Resources</a></li>
+        <li><a href="community.html">Community</a></li>
+      </ul>
+    </nav>
+
+    <button id="themeToggleBtn" class="theme-btn" aria-label="Toggle theme"></button>
+
+    <div class="buttons">
+      <button class="login"><a href="log/login.html">Log in</a></button>
+      <button class="signup"><a href="log/register.html">Sign up</a></button>
+    </div>
+  </header>
+
+  <section class="content">
+    <h1 style="color:var(--accent-color); margin-top: 10px;">My Assignments</h1>
+    <p style="margin-top:-6px; color:var(--text-muted); font-size:0.95rem;">
+      Single-attempt only. Assignments are locked after their due date.
+    </p>
+
+    <div style="margin: 18px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div style="flex:1; min-width:220px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
+        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Available</div>
+        <div id="laAvailableCount" style="font-size:1.5rem; font-weight:800; margin-top:4px; color:#fff;">0</div>
+      </div>
+      <div style="flex:1; min-width:220px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
+        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Completed</div>
+        <div id="laCompletedCount" style="font-size:1.5rem; font-weight:800; margin-top:4px; color:#fff;">0</div>
+      </div>
+      <div style="flex:1; min-width:220px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px;">
+        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">Locked</div>
+        <div id="laLockedCount" style="font-size:1.5rem; font-weight:800; margin-top:4px; color:#fff;">0</div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; text-align:left;">
+        <thead>
+          <tr style="border-bottom:2px solid rgba(255,255,255,0.12)">
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600;">Topics</th>
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600; text-align:center;">Questions</th>
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600; text-align:center;">Difficulty</th>
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600; text-align:center;">Due date</th>
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600; text-align:center;">Status</th>
+            <th style="padding:10px; color:var(--text-muted); font-size:0.85rem; font-weight:600; text-align:center;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="laTableBody">
+          <!-- Rendered by learnerAssignments.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <p id="laEmptyState" style="display:none; margin-top:16px; color:var(--text-muted); text-align:center;">No assignments available yet.</p>
+  </section>
+
+  <script src="quizProgress.js"></script>
+  <script src="quizAssignmentHelper.js"></script>
+  <script src="learnerAssignments.js"></script>
+</body>
+</html>
+

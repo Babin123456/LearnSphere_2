@@ -361,13 +361,105 @@
         }
     }
 
+    function exportAssignmentsAsJson() {
+        const assignments = loadAssignments();
+        const payload = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            assignments
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `learnsphere_assignment_set_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+    }
+
+    function importAssignmentsFromJsonFile(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const parsed = JSON.parse(String(reader.result || '{}'));
+                const importedAssignments = Array.isArray(parsed) ? parsed : parsed?.assignments;
+
+                if (!Array.isArray(importedAssignments)) {
+                    alert('Invalid JSON format for assignment import.');
+                    return;
+                }
+
+                // Basic normalization
+                const cleaned = importedAssignments
+                    .filter(a => a && typeof a === 'object')
+                    .map(a => ({
+                        id: String(a.id || ('assignment_' + Date.now())),
+                        topicIds: Array.isArray(a.topicIds) ? a.topicIds : [],
+                        dueDate: a.dueDate,
+                        difficulty: a.difficulty || 'medium',
+                        numQuestions: typeof a.numQuestions === 'number' ? a.numQuestions : 5,
+                        createdAt: a.createdAt || new Date().toISOString(),
+                        status: a.status || 'active'
+                    }))
+                    .filter(a => a.topicIds.length > 0 && !!a.dueDate);
+
+                if (cleaned.length === 0) {
+                    alert('No valid assignments found in the JSON.');
+                    return;
+                }
+
+                // Merge by id, overwriting duplicates
+                const existing = loadAssignments();
+                const byId = new Map(existing.map(a => [a.id, a]));
+                cleaned.forEach(a => byId.set(a.id, a));
+
+                saveAssignments(Array.from(byId.values()));
+
+                // Re-render
+                renderAssignmentsAndSubmissions();
+                updateTeacherAnalytics();
+
+                alert(`Imported ${cleaned.length} assignment(s).`);
+            } catch (e) {
+                console.error(e);
+                alert('Failed to import assignments: invalid JSON.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
     // Init function
     function init() {
         populateTopicCheckboxes();
         setupFormHandler();
+
+        // Export / Import wiring
+        const exportBtn = document.getElementById('exportAssignmentsBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportAssignmentsAsJson);
+        }
+
+        const importFileEl = document.getElementById('importAssignmentsFile');
+        if (importFileEl) {
+            importFileEl.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                importAssignmentsFromJsonFile(file);
+                // reset value so importing same file twice triggers change
+                importFileEl.value = '';
+            });
+        }
+
         renderAssignmentsAndSubmissions();
         updateTeacherAnalytics();
     }
+
 
     // Load
     document.addEventListener("DOMContentLoaded", () => {
