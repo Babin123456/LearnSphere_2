@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Analytics – LearnSphere</title>
+  <link rel="stylesheet" href="variables.css" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="navbar" role="banner">
+    <div class="logo"><a href="index.html" aria-label="LearnSphere Home">LearnSphere</a></div>
+    <nav id="navMenu" role="navigation" aria-label="Main navigation">
+      <ul>
+        <li><a href="explore.html">Explore</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="review.html">Review Queue</a></li>
+        <li><a href="resources.html">Resources</a></li>
+        <li><a href="community.html">Community</a></li>
+      </ul>
+    </nav>
+    <button id="themeToggleBtn" class="theme-btn" aria-label="Toggle theme"></button>
+    <div class="buttons">
+      <button class="login"><a href="log/login.html">Log in</a></button>
+      <button class="signup"><a href="log/register.html">Sign up</a></button>
+    </div>
+  </header>
+
+  <section class="content">
+    <h2>Teacher Analytics Dashboard</h2>
+    <p style="margin-top:-8px; font-size:13px; color:rgba(255,255,255,0.72)">
+      Topic/question-type trends (client-side demo from localStorage).
+    </p>
+  </section>
+
+  <section class="content" style="padding-top:0">
+    <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:160px;">
+          <label style="font-size:12px;color:rgba(255,255,255,0.72);font-weight:600;" for="taFromDate">Start date</label>
+          <input type="date" id="taFromDate" title="Start date" placeholder="YYYY-MM-DD" aria-label="Start date" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;outline:none;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:160px;">
+          <label style="font-size:12px;color:rgba(255,255,255,0.72);font-weight:600;" for="taToDate">End date</label>
+          <input type="date" id="taToDate" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;outline:none;" aria-label="End date" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:220px;">
+          <label style="font-size:12px;color:rgba(255,255,255,0.72);font-weight:600;" for="taTopicSelect">Topic</label>
+          <select id="taTopicSelect" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#0f1115;color:#fff;outline:none;" aria-label="Topic">
+            <option value="all" selected>All topics</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:220px;">
+          <label style="font-size:12px;color:rgba(255,255,255,0.72);font-weight:600;" for="taQuestionTypeSelect">Question type</label>
+          <select id="taQuestionTypeSelect" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#0f1115;color:#fff;outline:none;" aria-label="Question type" title="Question type">
+            <option value="all" selected>All types</option>
+            <option value="unknown">unknown</option>
+            <option value="mcq">mcq</option>
+            <option value="short">short</option>
+            <option value="numeric">numeric</option>
+            <option value="mixed">mixed</option>
+          </select>
+        </div>
+        <button type="button" id="taApplyBtn" style="background:rgba(102,252,241,0.16);border:1px solid rgba(102,252,241,0.35);color:#66fcf1;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;transition:var(--theme-transition);">
+          Apply
+        </button>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.72)">
+        Reads attempts from localStorage key <code>learnsphere_quiz_progress_v1</code>.
+      </div>
+    </div>
+
+    <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+      <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
+        <h2 style="margin-top:0">Accuracy trend (Topic)</h2>
+        <canvas id="taTopicAccuracyChart" style="width:100%;height:240px"></canvas>
+        <div style="font-size:13px;margin-top:8px;color:rgba(255,255,255,0.72)">Trend series for the selected topic(s).</div>
+      </div>
+
+      <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
+        <h2 style="margin-top:0">Accuracy trend (Question type)</h2>
+        <canvas id="taTypeAccuracyChart" style="width:100%;height:240px"></canvas>
+        <div style="font-size:13px;margin-top:8px;color:rgba(255,255,255,0.72)">Trend series for the selected question type(s).</div>
+      </div>
+    </div>
+
+    <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2);margin-top:16px;">
+      <h2 style="margin-top:0">Improvement over time</h2>
+      <div id="taImprovementText" style="font-size:13px;color:rgba(255,255,255,0.72)">—</div>
+    </div>
+
+  </section>
+
+  <script src="navbar.js"></script>
+  <script src="script.js"></script>
+  <script src="progress.js"></script>
+  <script src="quizProgress.js"></script>
+  <script src="dashboardProgress.js"></script>
+</body>
+</html>
+

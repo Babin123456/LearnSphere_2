@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curriculum Map – LearnSphere</title>
+  <meta name="description" content="Visual map of LearnSphere curriculum topics with prerequisites and your completion progress." />
+
+  <link rel="stylesheet" href="variables.css" />
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    .page-wrap {
+      max-width: 1120px;
+      margin: 22px auto;
+      padding: 0 16px;
+    }
+
+    .header-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 14px;
+    }
+
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-color);
+    }
+
+    #curriculumMapContainer {
+      overflow: auto;
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #curriculumMapLegend {
+      color: rgba(255,255,255,0.78);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .hint {
+      color: rgba(255,255,255,0.68);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="navbar" role="banner">
+    <div class="logo"><a href="index.html" aria-label="LearnSphere Home">LearnSphere</a></div>
+
+    <button
+      class="hamburger"
+      id="hamburgerBtn"
+      aria-label="Toggle navigation menu"
+      aria-expanded="false"
+      aria-controls="navMenu"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav id="navMenu" role="navigation" aria-label="Main navigation">
+      <ul>
+        <li><a href="explore.html">Explore</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="review.html">Review Queue</a></li>
+        <li><a href="resources.html">Resources</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="curriculum.html">Curriculum Map</a></li>
+      </ul>
+    </nav>
+
+    <button id="themeToggleBtn" class="theme-btn" aria-label="Toggle theme"></button>
+
+    <div class="buttons">
+      <button class="login"><a href="log/login.html">Log in</a></button>
+      <button class="signup"><a href="log/register.html">Sign up</a></button>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="header-block">
+      <h1 style="margin:0;">Curriculum Map</h1>
+      <div class="hint">
+        Prerequisites are shown as directed edges. Topic nodes are colored based on your saved completion status.
+      </div>
+    </section>
+
+    <section class="controls">
+      <label>
+        <input id="curriculumMapCompletedOnlyToggle" type="checkbox" />
+        Show completed only
+      </label>
+
+      <div id="curriculumMapLegend"></div>
+    </section>
+
+    <section>
+      <div id="curriculumMapContainer" aria-label="Curriculum map visualization">
+        <!-- SVG injected by curriculumMap.js -->
+      </div>
+    </section>
+  </main>
+
+  <script src="progress.js"></script>
+  <script src="curriculumMapConfig.js"></script>
+  <script src="curriculumMap.js"></script>
+  <script src="navbar.js"></script>
+  <script src="script.js" defer></script>
+
+  <script>
+    // Ensure theme + navbar scripts don't break this page.
+    // (No-op; present for consistency with other pages.)
+  </script>
+</body>
+</html>
+

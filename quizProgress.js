@@ -321,9 +321,18 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
   }
 
   // Add attempt record for charts
+  // Question type (optional).
+  // Captured from whatever the quiz runtime exposes; otherwise defaults to "unknown".
+  const questionType = (() => {
+    if (typeof window.questionType === "string" && window.questionType.trim()) return window.questionType;
+    if (typeof window.quizQuestionType === "string" && window.quizQuestionType.trim()) return window.quizQuestionType;
+    return "unknown";
+  })();
+
   state.attempts.push({
     topicId,
     quizId,
+    questionType,
     score: got,
     totalQuestions: total,
     correctCount: correct,
