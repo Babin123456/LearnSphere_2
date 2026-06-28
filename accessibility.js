@@ -15,8 +15,19 @@
       optionsContainer.setAttribute('role', 'radiogroup');
     }
 
+    refreshOptionTabStops(optionsContainer);
+
     // Attach a keydown listener for navigation shortcuts.
     document.addEventListener('keydown', (e) => handleKeyNavigation(e, optionsContainer, srStatus));
+
+    if (optionsContainer) {
+      optionsContainer.addEventListener('click', () => refreshOptionTabStops(optionsContainer));
+      optionsContainer.addEventListener('focusin', (event) => {
+        if (event.target?.classList?.contains('option')) {
+          setActiveOption(event.target, optionsContainer, false);
+        }
+      });
+    }
 
     return { container, optionsContainer, srStatus };
   }
@@ -26,6 +37,10 @@
     const KEY = {
       LEFT: 'ArrowLeft',
       RIGHT: 'ArrowRight',
+      UP: 'ArrowUp',
+      DOWN: 'ArrowDown',
+      HOME: 'Home',
+      END: 'End',
       ENTER: 'Enter',
       SPACE: ' ',
       CTRL_ENTER: 'Enter',
@@ -34,13 +49,23 @@
     const activeEl = document.activeElement;
     const isOption = activeEl && activeEl.classList && activeEl.classList.contains('option');
 
-    if (event.key === KEY.LEFT && isOption) {
-      focusPrevOption(activeEl);
+    if ((event.key === KEY.LEFT || event.key === KEY.UP) && isOption) {
+      focusRelativeOption(activeEl, optionsContainer, -1);
       event.preventDefault();
       return;
     }
-    if (event.key === KEY.RIGHT && isOption) {
-      focusNextOption(activeEl);
+    if ((event.key === KEY.RIGHT || event.key === KEY.DOWN) && isOption) {
+      focusRelativeOption(activeEl, optionsContainer, 1);
+      event.preventDefault();
+      return;
+    }
+    if (event.key === KEY.HOME && isOption) {
+      focusOptionAt(optionsContainer, 0);
+      event.preventDefault();
+      return;
+    }
+    if (event.key === KEY.END && isOption) {
+      focusOptionAt(optionsContainer, getOptions(optionsContainer).length - 1);
       event.preventDefault();
       return;
     }
@@ -60,28 +85,58 @@
     }
   }
 
-  function focusPrevOption(current) {
-    const options = Array.from(document.querySelectorAll('.option'));
-    const idx = options.indexOf(current);
-    if (idx > 0) {
-      options[idx - 1].focus();
-      announceOptionChange(options[idx - 1]);
-    }
+  function getOptions(optionsContainer) {
+    const scope = optionsContainer || document;
+    return Array.from(scope.querySelectorAll('.option'));
   }
 
-  function focusNextOption(current) {
-    const options = Array.from(document.querySelectorAll('.option'));
-    const idx = options.indexOf(current);
-    if (idx < options.length - 1) {
-      options[idx + 1].focus();
-      announceOptionChange(options[idx + 1]);
-    }
+  function refreshOptionTabStops(optionsContainer) {
+    const options = getOptions(optionsContainer);
+    const selected = options.find((option) => option.classList.contains('selected'));
+    const active = selected || options[0];
+
+    options.forEach((option) => {
+      option.setAttribute('tabindex', option === active ? '0' : '-1');
+      if (!option.getAttribute('role')) {
+        option.setAttribute('role', 'radio');
+      }
+      if (!option.getAttribute('aria-checked')) {
+        option.setAttribute('aria-checked', option.classList.contains('selected') ? 'true' : 'false');
+      }
+    });
   }
 
-  function announceOptionChange(optionEl) {
+  function setActiveOption(option, optionsContainer, shouldFocus = true) {
+    const options = getOptions(optionsContainer);
+    options.forEach((item) => {
+      item.setAttribute('tabindex', item === option ? '0' : '-1');
+    });
+    if (shouldFocus) option.focus();
+    announceOptionChange(option, options.indexOf(option), options.length);
+  }
+
+  function focusRelativeOption(current, optionsContainer, delta) {
+    const options = getOptions(optionsContainer);
+    const idx = options.indexOf(current);
+    if (idx === -1 || options.length === 0) return;
+
+    const nextIndex = (idx + delta + options.length) % options.length;
+    setActiveOption(options[nextIndex], optionsContainer);
+  }
+
+  function focusOptionAt(optionsContainer, index) {
+    const options = getOptions(optionsContainer);
+    if (!options.length || index < 0 || index >= options.length) return;
+    setActiveOption(options[index], optionsContainer);
+  }
+
+  function announceOptionChange(optionEl, index, total) {
     const sr = document.getElementById('sr-status');
     if (sr) {
-      sr.textContent = `Option ${optionEl.textContent.trim()} selected`;
+      const position = typeof index === 'number' && typeof total === 'number'
+        ? `Option ${index + 1} of ${total}: `
+        : 'Option ';
+      sr.textContent = `${position}${optionEl.textContent.trim()}`;
     }
   }
 
