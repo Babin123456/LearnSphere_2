@@ -355,6 +355,8 @@ window.studyProgress = {
         const todayToken = _parseISODateToUTCStart(today);
         const lastToken = lastActive ? _parseISODateToUTCStart(lastActive) : null;
 
+        const prevStreak = state.currentStreak || 0;
+
         if (!lastActive) {
             state.currentStreak = 1;
             state.lastActiveDate = today;
@@ -378,6 +380,37 @@ window.studyProgress = {
         }
 
         this.saveStreakState(state);
+
+        // Milestone notifications (best-effort)
+        try {
+            if (window.notifications && typeof window.notifications.notifyFromEvent === "function") {
+                const qDone = state.dailyGoalProgress.quizzesCompleted || 0;
+                const rDone = state.dailyGoalProgress.questionsReviewed || 0;
+                const goalAchieved = qDone >= 1 || rDone >= 10;
+
+                // Fire streak maintained when streak increases (and user is active today)
+                if ((state.currentStreak || 0) > prevStreak) {
+                    const dedupeKey = `streak-up-${today}-${state.currentStreak}`;
+                    window.notifications.notifyFromEvent({
+                        type: "streak",
+                        title: "Streak maintained",
+                        message: `🔥 Streak maintained — you reached a ${state.currentStreak}-day streak!`,
+                        ctaUrl: "my_progress.html",
+                        dedupeKey,
+                    });
+                } else if (goalAchieved) {
+                    // Also notify for daily goal completion (even if streak didn't increase)
+                    const dedupeKey = `daily-goal-${today}-${qDone}-${rDone}`;
+                    window.notifications.notifyFromEvent({
+                        type: "streak",
+                        title: "Streak maintained",
+                        message: `🎯 Daily goal achieved today. Keep your streak alive!`,
+                        ctaUrl: "my_progress.html",
+                        dedupeKey,
+                    });
+                }
+            }
+        } catch {}
 
         if (window.achievements && typeof window.achievements.checkAndNotify === "function") {
             window.achievements.checkAndNotify();
