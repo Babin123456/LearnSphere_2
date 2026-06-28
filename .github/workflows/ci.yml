@@ -37,9 +37,9 @@ jobs:
           find . -name "*.html" \
             -not -path "./.git/*" \
             -not -path "./node_modules/*" \
-            | xargs htmlhint \
-            --config .htmlhintrc \
-            || true
+            -print0 \
+            | xargs -0 htmlhint \
+            --config .htmlhintrc
           echo "HTMLHint scan completed."
 
   # ── Job 2: Check for Hardcoded Secrets ─────────────────────────────────────
