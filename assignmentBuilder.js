@@ -10,6 +10,26 @@
 
     const ASSIGNMENTS_KEY = "learnsphere_assignments";
     const SUBMISSIONS_KEY = "learnsphere_assignment_submissions";
+    let tableEventsBound = false;
+
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function safeDifficulty(value) {
+        const normalized = String(value || "medium").toLowerCase();
+        return ["easy", "medium", "hard"].includes(normalized) ? normalized : "medium";
+    }
+
+    function safeNumber(value, fallback = 0) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
+    }
 
     // Helper to get topics from quizProgress
     function getTopics() {
@@ -127,7 +147,7 @@
             }
 
             const dueDate = document.getElementById("dueDate").value;
-            const difficulty = document.getElementById("difficulty").value;
+            const difficulty = safeDifficulty(document.getElementById("difficulty").value);
             const numQuestions = parseInt(document.getElementById("numQuestions").value, 10);
 
             if (!dueDate) {
@@ -190,6 +210,11 @@
                 const found = topics.find(t => t.id === id);
                 return found ? found.label : id;
             }).join(", ");
+            const safeTopicLabels = escapeHTML(topicLabels);
+            const safeAssignmentId = escapeHTML(asg.id);
+            const safeDueDate = escapeHTML(asg.dueDate);
+            const difficulty = safeDifficulty(asg.difficulty);
+            const safeQuestionCount = safeNumber(asg.numQuestions, 0);
 
             // Calculate assignment submissions
             const asgSubmissions = submissions.filter(s => s.assignmentId === asg.id);
@@ -198,7 +223,9 @@
             let avgScoreText = "—";
             if (totalSubs > 0) {
                 const totalScorePct = asgSubmissions.reduce((sum, curr) => {
-                    const pct = curr.totalQuestions > 0 ? (curr.score / curr.totalQuestions) * 100 : 0;
+                    const totalQuestions = safeNumber(curr.totalQuestions, 0);
+                    const score = safeNumber(curr.score, 0);
+                    const pct = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
                     return sum + pct;
                 }, 0);
                 avgScoreText = Math.round(totalScorePct / totalSubs) + "%";
@@ -206,17 +233,17 @@
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td style="padding: 12px; font-weight: 600;">${topicLabels}</td>
-                <td style="padding: 12px; text-align: center;">${asg.numQuestions}</td>
-                <td style="padding: 12px; text-align: center;"><span class="difficulty-badge ${asg.difficulty}">${asg.difficulty.toUpperCase()}</span></td>
-                <td style="padding: 12px; text-align: center;">${asg.dueDate}</td>
+                <td style="padding: 12px; font-weight: 600;">${safeTopicLabels}</td>
+                <td style="padding: 12px; text-align: center;">${safeQuestionCount}</td>
+                <td style="padding: 12px; text-align: center;"><span class="difficulty-badge ${difficulty}">${difficulty.toUpperCase()}</span></td>
+                <td style="padding: 12px; text-align: center;">${safeDueDate}</td>
                 <td style="padding: 12px; text-align: center;">
                     <div style="font-weight: 700; color: var(--accent-color);">${totalSubs} submitted</div>
                     <div class="muted" style="font-size: 0.8rem;">Avg: ${avgScoreText}</div>
                 </td>
                 <td style="padding: 12px; text-align: center;">
-                    <button class="view-submissions-btn" data-id="${asg.id}" style="background: var(--btn-secondary-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-right: 6px; transition: var(--theme-transition);">Submissions</button>
-                    <button class="delete-asg-btn" data-id="${asg.id}" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: var(--theme-transition);">Delete</button>
+                    <button class="view-submissions-btn" data-id="${safeAssignmentId}" style="background: var(--btn-secondary-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-right: 6px; transition: var(--theme-transition);">Submissions</button>
+                    <button class="delete-asg-btn" data-id="${safeAssignmentId}" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: var(--theme-transition);">Delete</button>
                 </td>
             `;
 
@@ -263,18 +290,21 @@
                         </thead>
                         <tbody>
                             ${asgSubmissions.map(sub => {
-                                const scorePct = sub.totalQuestions > 0 ? Math.round((sub.score / sub.totalQuestions) * 100) : 0;
-                                const dateStr = new Date(sub.timestamp).toLocaleString();
+                                const totalQuestions = safeNumber(sub.totalQuestions, 0);
+                                const score = safeNumber(sub.score, 0);
+                                const scorePct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+                                const date = new Date(sub.timestamp);
+                                const dateStr = Number.isNaN(date.getTime()) ? "Unknown date" : date.toLocaleString();
                                 return `
                                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding: 6px 12px; font-size: 0.9rem; font-weight: 500;">${sub.studentName}</td>
-                                        <td style="padding: 6px 12px; font-size: 0.9rem; text-align: center; font-weight: 700; color: var(--accent-color);">${sub.score} / ${sub.totalQuestions}</td>
+                                        <td style="padding: 6px 12px; font-size: 0.9rem; font-weight: 500;">${escapeHTML(sub.studentName || "Unknown student")}</td>
+                                        <td style="padding: 6px 12px; font-size: 0.9rem; text-align: center; font-weight: 700; color: var(--accent-color);">${score} / ${totalQuestions}</td>
                                         <td style="padding: 6px 12px; font-size: 0.9rem; text-align: center;">
                                             <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; background: ${scorePct >= 80 ? 'rgba(16, 185, 129, 0.15); color: #10b981;' : (scorePct >= 50 ? 'rgba(245, 158, 11, 0.15); color: #f59e0b;' : 'rgba(239, 68, 68, 0.15); color: #ef4444;')};">
                                                 ${scorePct}%
                                             </span>
                                         </td>
-                                        <td style="padding: 6px 12px; font-size: 0.85rem; text-align: right; color: var(--text-muted);">${dateStr}</td>
+                                        <td style="padding: 6px 12px; font-size: 0.85rem; text-align: right; color: var(--text-muted);">${escapeHTML(dateStr)}</td>
                                     </tr>
                                 `;
                             }).join("")}
@@ -285,14 +315,19 @@
 
             detailsTr.innerHTML = `
                 <td colspan="6" style="padding: 16px; border-left: 4px solid var(--accent-color);">
-                    <h4 style="margin: 0 0 8px 0; color: var(--accent-color); font-size: 0.95rem;">Submissions details for ${topicLabels}</h4>
+                    <h4 style="margin: 0 0 8px 0; color: var(--accent-color); font-size: 0.95rem;">Submissions details for ${safeTopicLabels}</h4>
                     ${submissionsHTML}
                 </td>
             `;
             container.appendChild(detailsTr);
         });
+    }
 
-        // Add event listeners for Submissions toggle & Delete button
+    function setupAssignmentTableEvents() {
+        const container = document.getElementById("assignmentsTableBody");
+        if (!container || tableEventsBound) return;
+        tableEventsBound = true;
+
         container.addEventListener("click", (e) => {
             const target = e.target;
             if (target.classList.contains("view-submissions-btn")) {
@@ -365,6 +400,7 @@
     function init() {
         populateTopicCheckboxes();
         setupFormHandler();
+        setupAssignmentTableEvents();
         renderAssignmentsAndSubmissions();
         updateTeacherAnalytics();
     }
