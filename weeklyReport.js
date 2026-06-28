@@ -108,11 +108,96 @@
     });
   }
 
+  function _getWeekAccuracySeries(days = 14) {
+    // Uses quizProgress.getAccuracySeries, then splits into last 7 vs previous 7.
+    if (!window.quizProgress || typeof window.quizProgress.getAccuracySeries !== 'function') return null;
+    const series = window.quizProgress.getAccuracySeries({ days });
+    if (!series || !Array.isArray(series.accuracyByDay)) return null;
+    const acc = series.accuracyByDay;
+    const last7 = acc.slice(-7);
+    const prev7 = acc.slice(0, 7);
+    function avg(arr) {
+      const nums = arr.filter((x) => typeof x === 'number' && Number.isFinite(x));
+      if (!nums.length) return null;
+      return nums.reduce((s, v) => s + v, 0) / nums.length;
+    }
+    return { last7, prev7, lastAvg: avg(last7), prevAvg: avg(prev7), series };
+  }
+
+  function _renderBiggestImprovement() {
+    const container = document.getElementById('weeklyBiggestImprovement');
+    if (!container) return;
+
+    const series = _getWeekAccuracySeries(14);
+    if (!series || series.lastAvg == null || series.prevAvg == null) {
+      container.textContent = 'Complete more quizzes to see weekly improvement.';
+      return;
+    }
+
+    const delta = series.lastAvg - series.prevAvg;
+    const pctDelta = Math.round(delta * 100);
+
+    if (pctDelta === 0) {
+      container.textContent = 'Your accuracy is steady compared to last week.';
+    } else if (pctDelta > 0) {
+      container.textContent = `📈 Biggest improvement: +${pctDelta}% accuracy this week.`;
+    } else {
+      container.textContent = `📉 Accuracy change this week: ${pctDelta}% vs last week. Focus on weak concepts below.`;
+    }
+  }
+
+  function _renderNextGoals() {
+    const container = document.getElementById('weeklyNextGoals');
+    if (!container) return;
+
+    const daily = (window.studyProgress && typeof window.studyProgress.loadStreakState === 'function')
+      ? window.studyProgress.loadStreakState()
+      : null;
+
+    const qDone = daily?.dailyGoalProgress?.quizzesCompleted || 0;
+    const rDone = daily?.dailyGoalProgress?.questionsReviewed || 0;
+
+    const goalAchieved = qDone >= 1 || rDone >= 10;
+
+    const weak = (window.quizProgress && typeof window.quizProgress.getWeakestSkills === 'function')
+      ? window.quizProgress.getWeakestSkills({ limit: 3 })
+      : [];
+
+    const recs = (window.quizProgress && typeof window.quizProgress.getRecommendedTopics === 'function')
+      ? window.quizProgress.getRecommendedTopics({ limit: 3 })
+      : [];
+
+    const topTargets = weak.length ? weak : (recs.map((r) => ({ label: r.topic?.label || r.topicId || 'Next topic' })));
+
+    const lines = [];
+    if (goalAchieved) {
+      lines.push('✅ Daily goal: achieved today. Keep the streak safe by practicing tomorrow.');
+    } else {
+      lines.push(`🎯 Daily goal: ${qDone}/1 quiz and ${rDone}/10 questions reviewed today.`);
+    }
+
+    if (topTargets && topTargets.length) {
+      const names = topTargets.slice(0, 2).map((t) => t.label || t.topic?.label).filter(Boolean);
+      if (names.length) {
+        lines.push(`Next goals: practice ${names.join(' and ')} next.`);
+      }
+    }
+
+    if (lines.length === 0) {
+      container.textContent = 'Complete quizzes to unlock weekly goals.';
+    } else {
+      container.innerHTML = lines.map((l) => `<div style="margin-top:6px;">${l}</div>`).join('');
+    }
+  }
+
   function _renderWeeklyReport() {
     _updateStreak();
     _renderStrengths();
     _renderWeaknesses();
+    _renderBiggestImprovement();
+    _renderNextGoals();
   }
+
 
   document.addEventListener('DOMContentLoaded', _renderWeeklyReport);
 })();

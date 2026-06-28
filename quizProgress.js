@@ -376,7 +376,28 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
   // Update unified streak & daily goal state
   _updateUnifiedStreakAndGoal("quiz", 1);
 
+  // Milestone notifications (best-effort)
+  try {
+    if (window.notifications && typeof window.notifications.notifyFromEvent === "function") {
+      // New quiz ready when there are meaningful recommendations
+      if (window.quizProgress && typeof window.quizProgress.getRecommendedTopics === "function") {
+        const recs = window.quizProgress.getRecommendedTopics({ limit: 3 }) || [];
+        if (recs.length > 0) {
+          const dedupeKey = `quiz-ready-${new Date().toISOString().slice(0, 10)}-${recs.length}`;
+          window.notifications.notifyFromEvent({
+            type: "quiz_ready",
+            title: "New quiz ready",
+            message: `New practice is available based on your latest attempt.`,
+            ctaUrl: "home.html",
+            dedupeKey,
+          });
+        }
+      }
+    }
+  } catch {}
+
   // Queue for future backend sync when offline
+
   if (window.offlineSync && typeof window.offlineSync.queueProgressUpdate === "function") {
     if (!window.offlineSync.isOnline()) {
       window.offlineSync.queueProgressUpdate("quiz_attempt", {
