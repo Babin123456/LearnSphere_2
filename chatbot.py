@@ -8,27 +8,41 @@ from flask_cors import CORS
 import google.generativeai as genai
 
 # -----------------------------
-# Security: API key via env var
-# -----------------------------
-API_KEY = os.environ.get("GEMINI_API_KEY")
-
-if not API_KEY:
-    raise EnvironmentError(
-        "GEMINI_API_KEY environment variable is not set. "
-        "Set it before running the server."
-    )
-
-genai.configure(api_key=API_KEY)
-
-# -----------------------------
 # App setup
 # -----------------------------
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
-# Create the model once at startup (cheaper than per request)
 MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-1.5-pro")
-model = genai.GenerativeModel(MODEL_NAME)
+model = None
+
+
+def get_model():
+    """Initialize Gemini lazily so importing the Flask app never crashes."""
+    global model
+
+    if model is not None:
+        return model
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(MODEL_NAME)
+    return model
+
+
+def unavailable_response():
+    return (
+        jsonify({
+            "reply": (
+                "The AI tutor is not configured yet. "
+                "Set GEMINI_API_KEY on the server and restart the backend."
+            )
+        }),
+        503,
+    )
 
 
 # -----------------------------
@@ -145,6 +159,10 @@ def chat():
         return jsonify({"reply": format_response(reply)})
 
     try:
+        tutor_model = get_model()
+        if tutor_model is None:
+            return unavailable_response()
+
         # Keep the model constrained to educational tutoring.
         system_guardrails = (
             "You are an educational tutor for Physics, Maths, Chemistry, and Biology. "
@@ -155,7 +173,7 @@ def chat():
         # Structured prompt (reduces injection impact)
         prompt = f"{system_guardrails}\n\nUser message: {user_input}"
 
-        response = model.generate_content(prompt)
+        response = tutor_model.generate_content(prompt)
 
         reply_text = ""
         if response and getattr(response, "candidates", None):
@@ -201,6 +219,10 @@ def explain_mistake():
         return jsonify({"error": "Too many requests. Please try again later."}), 429
 
     try:
+        tutor_model = get_model()
+        if tutor_model is None:
+            return unavailable_response()
+
         # Structured prompt instructing the model to explain the concept and give a follow-up question
         system_prompt = (
             "You are an educational tutor for Physics, Maths, Chemistry, and Biology. "
@@ -219,7 +241,7 @@ def explain_mistake():
             f"Correct Answer: {correct_answer}"
         )
 
-        response = model.generate_content(prompt)
+        response = tutor_model.generate_content(prompt)
 
         reply_text = ""
         if response and getattr(response, "candidates", None):
