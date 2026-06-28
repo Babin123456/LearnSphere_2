@@ -253,21 +253,76 @@
     window.dispatchEvent(new Event("review-saved"));
   }
 
-  // Minimal question set per topic.
+  function _makeQBankQuestion(base) {
+    const q = { ...base };
+    // Ensure stable id
+    if (!q.__qid && typeof q.q === "string") {
+      q.__qid = `${base.topicId || ""}:${q.q}`;
+    }
+    // Normalize fields
+    if (!Array.isArray(q.options)) q.options = [];
+    if (typeof q.answerIndex !== "number") q.answerIndex = 0;
+    if (typeof q.whyWrong !== "string") q.whyWrong = "";
+    if (!Array.isArray(q.misconceptions)) q.misconceptions = [];
+    return q;
+  }
+
+  function _getWhyWrongForChoice(question, pickedIndex) {
+    if (!question) return "";
+    const whyWrong = typeof question.whyWrong === "string" ? question.whyWrong : "";
+    return whyWrong || "";
+  }
+
+  // Minimal question set per topic (now enriched with misconception explanations).
   function getReviewQuiz(topicId) {
+    // NOTE: Keep this bank self-contained (hardcoded) because the review UI
+    // currently relies on this client-side dataset.
     const bank = {
       "physics-motion": [
         {
+          __qid: "physics-motion:q1",
+          topicId: "physics-motion",
+
           q: "Which quantity describes how fast an object changes its velocity?",
           options: ["Speed", "Acceleration", "Distance", "Momentum"],
           answerIndex: 1,
+          whyWrong: "Acceleration measures the rate of change of velocity (not speed, not distance, and not momentum).",
+          misconceptions: [
+            {
+              title: "Confusing speed with acceleration",
+              explanation: "Speed tells how fast the motion is (magnitude of velocity). Acceleration tells how the velocity changes (including changes in speed and/or direction).",
+              commonWrongChoices: ["Speed"],
+            },
+          ],
+          remediation: {
+            prompt: "If an object’s speed is constant but its direction changes, does it have acceleration?",
+            options: ["No", "Yes", "Only if gravity acts", "Only if it slows down"],
+            answerIndex: 1,
+            explanation: "Yes. Any change in velocity—speed or direction—means acceleration.",
+          },
         },
         {
+          __qid: "physics-motion:q2",
           q: "If velocity is constant, acceleration is…",
           options: ["Constant", "Zero", "Increasing", "Negative"],
           answerIndex: 1,
+          whyWrong: "If velocity is constant, it does not change over time, so acceleration (rate of change of velocity) is zero.",
+          misconceptions: [
+            {
+              title: "Thinking ‘constant velocity’ still implies acceleration",
+              explanation: "Acceleration comes from changing velocity. Constant velocity means there is no change—so acceleration is zero.",
+              commonWrongChoices: ["Constant", "Increasing", "Negative"],
+            },
+          ],
+          remediation: {
+            prompt: "Acceleration is the rate of…",
+            options: ["Change of velocity", "Change of distance", "Change of mass", "Change of temperature"],
+            answerIndex: 0,
+            explanation: "Acceleration is the rate of change of velocity.",
+          },
         },
       ],
+
       "physics-nlm": [
         {
           q: "Newton's First Law relates to…",
