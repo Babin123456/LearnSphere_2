@@ -4,16 +4,13 @@
  */
 
 // Increment this value to invalidate older caches
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const CACHE_NAME = `learnsphere-static-${CACHE_VERSION}`;
 
 // For runtime image caching
 const RUNTIME_IMAGE_CACHE_NAME = `learnsphere-images-${CACHE_VERSION}`;
 
-// App shell URLs
-// Keep this list conservative; runtime caching covers the rest.
-const APP_SHELL_URLS = [
-  // Quiz pages (offline-first)
+const QUIZ_PRACTICE_URLS = [
   "/quiz/motionquiz.html",
   "/quiz/nlmquiz.html",
   "/quiz/projectilequiz.html",
@@ -27,7 +24,6 @@ const APP_SHELL_URLS = [
   "/chemistryquiz/equilibriumquiz.html",
   "/chemistryquiz/thermoquiz.html",
 
-  // Quizzes scripts
   "/quiz/motionquiz.js",
   "/quiz/nlmquiz.js",
   "/quiz/projectilequiz.js",
@@ -44,7 +40,6 @@ const APP_SHELL_URLS = [
   "/quizAssignmentHelper.js",
   "/offlineSync.js",
 
-  // Quizzes styles
   "/quiz/motionquiz.css",
   "/quiz/nlmquiz.css",
   "/quiz/projectilequiz.css",
@@ -57,6 +52,11 @@ const APP_SHELL_URLS = [
   "/chemistryquiz/chemical_bondingquiz.css",
   "/chemistryquiz/equilibriumquiz.css",
   "/chemistryquiz/thermoquiz.css",
+];
+
+// App shell URLs. Runtime caching covers the rest.
+const APP_SHELL_URLS = [
+  ...QUIZ_PRACTICE_URLS,
 
   "/",
   "/index.html",
@@ -90,19 +90,6 @@ const APP_SHELL_URLS = [
   "/exportProgress.js",
   "/dashboardProgress.js",
 
-  // Data
-  "/quiz/bank/physics-motion.json",
-  "/quiz/bank/physics-nlm.json",
-  "/quiz/bank/physics-projectile.json",
-  "/quiz/bank/physics-ray.json",
-  "/quiz/bank/maths-calculus.json",
-  "/quiz/bank/maths-geometry.json",
-  "/quiz/bank/maths-probability.json",
-  "/quiz/bank/maths-vectors.json",
-  "/quiz/bank/chemistry-atomic.json",
-  "/quiz/bank/chemistry-bonding.json",
-  "/quiz/bank/chemistry-equilibrium.json",
-  "/quiz/bank/chemistry-thermo.json",
   "/manifest.json",
 
   // Images
@@ -124,11 +111,30 @@ function requestUrl(event) {
   }
 }
 
+async function cacheUrlsIndividually(cache, urls) {
+  const uniqueUrls = [...new Set(urls)];
+
+  await Promise.all(
+    uniqueUrls.map(async (url) => {
+      try {
+        const response = await fetch(url, { cache: "reload" });
+        if (response && response.ok) {
+          await cache.put(url, response);
+        } else {
+          console.warn(`LearnSphere: Skipping cache for ${url} (${response?.status || "no response"})`);
+        }
+      } catch (err) {
+        console.warn(`LearnSphere: Skipping cache for ${url}`, err);
+      }
+    })
+  );
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(APP_SHELL_URLS);
+      await cacheUrlsIndividually(cache, APP_SHELL_URLS);
       // Activate SW immediately
       self.skipWaiting();
     })()
@@ -283,76 +289,15 @@ self.addEventListener("message", (event) => {
         const cache = await caches.open(CACHE_NAME);
         
         const urlsToPreload = [
-          // Quizzes HTML
-          "/quiz/motionquiz.html",
-          "/quiz/nlmquiz.html",
-          "/quiz/projectilequiz.html",
-          "/quiz/rayquiz.html",
-          "/mathsquiz/calculusquiz.html",
-          "/mathsquiz/geometryquiz.html",
-          "/mathsquiz/probabilityquiz.html",
-          "/mathsquiz/vectorquiz.html",
-          "/chemistryquiz/atomic_structurequiz.html",
-          "/chemistryquiz/chemical_bondingquiz.html",
-          "/chemistryquiz/equilibriumquiz.html",
-          "/chemistryquiz/thermoquiz.html",
-          
-          // Quizzes JS
-          "/quiz/motionquiz.js",
-          "/quiz/nlmquiz.js",
-          "/quiz/projectilequiz.js",
-          "/quiz/rayquiz.js",
-          "/quiz/adaptiveQuiz.js",
-          "/mathsquiz/calculusquiz.js",
-          "/mathsquiz/geometryquiz.js",
-          "/mathsquiz/probabilityquiz.js",
-          "/mathsquiz/vectorquiz.js",
-          "/chemistryquiz/atomic_structurequiz.js",
-          "/chemistryquiz/chemical_bondingquiz.js",
-          "/chemistryquiz/equilibriumquiz.js",
-          "/chemistryquiz/thermoquiz.js",
-          "/quizAssignmentHelper.js",
-
-          // Quizzes CSS
-          "/quiz/motionquiz.css",
-          "/quiz/nlmquiz.css",
-          "/quiz/projectilequiz.css",
-          "/quiz/rayquiz.css",
-          "/mathsquiz/calculusquiz.css",
-          "/mathsquiz/geometryquiz.css",
-          "/mathsquiz/probabilityquiz.css",
-          "/mathsquiz/vectorquiz.css",
-          "/chemistryquiz/atomic_structurequiz.css",
-          "/chemistryquiz/chemical_bondingquiz.css",
-          "/chemistryquiz/equilibriumquiz.css",
-          "/chemistryquiz/thermoquiz.css",
-
-          // Subject Pages
+          ...QUIZ_PRACTICE_URLS,
           "/sub/maths.html",
           "/sub/physics.html",
           "/sub/chemistry.html",
           "/sub/biology.html",
-
-          // Quiz data
-          "/quiz/bank/physics-motion.json",
-          "/quiz/bank/physics-nlm.json",
-          "/quiz/bank/physics-projectile.json",
-          "/quiz/bank/physics-ray.json",
-          "/quiz/bank/maths-calculus.json",
-          "/quiz/bank/maths-geometry.json",
-          "/quiz/bank/maths-probability.json",
-          "/quiz/bank/maths-vectors.json",
-          "/quiz/bank/chemistry-atomic.json",
-          "/quiz/bank/chemistry-bonding.json",
-          "/quiz/bank/chemistry-equilibrium.json",
-          "/quiz/bank/chemistry-thermo.json",
-
-          // Offline sync module
-          "/offlineSync.js"
         ];
 
         try {
-          await cache.addAll(urlsToPreload);
+          await cacheUrlsIndividually(cache, urlsToPreload);
           
           // Notify clients of success
           const clientsList = await self.clients.matchAll();
