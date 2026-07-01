@@ -47,6 +47,9 @@
 
 ## 🗂️ Project Architecture
 
+For a contributor-focused module map and data-flow notes, see
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ```
 LearnSphere_2/
 │
