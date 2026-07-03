@@ -87,20 +87,23 @@
     <div class="grid-2 teacher-analytics-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
       <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
         <h2 style="margin-top:0">Accuracy trend (Topic)</h2>
-        <canvas id="taTopicAccuracyChart" style="width:100%;height:240px"></canvas>
+          <canvas id="taTopicAccuracyChart" style="width:100%;height:240px"></canvas>
+          <button class="drilldown-btn" data-metric="topic" style="margin-top:8px;background:none;border:none;color:#66fcf1;cursor:pointer;">🔎 Drill‑down</button>
         <div style="font-size:13px;margin-top:8px;color:rgba(255,255,255,0.72)">Trend series for the selected topic(s).</div>
       </div>
 
       <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
         <h2 style="margin-top:0">Accuracy trend (Question type)</h2>
-        <canvas id="taTypeAccuracyChart" style="width:100%;height:240px"></canvas>
+          <canvas id="taTypeAccuracyChart" style="width:100%;height:240px"></canvas>
+          <button class="drilldown-btn" data-metric="type" style="margin-top:8px;background:none;border:none;color:#66fcf1;cursor:pointer;">🔎 Drill‑down</button>
         <div style="font-size:13px;margin-top:8px;color:rgba(255,255,255,0.72)">Trend series for the selected question type(s).</div>
       </div>
     </div>
 
     <div class="card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.2);margin-top:16px;">
       <h2 style="margin-top:0">Improvement over time</h2>
-      <div id="taImprovementText" style="font-size:13px;color:rgba(255,255,255,0.72)">—</div>
+        <div id="taImprovementText" style="font-size:13px;color:rgba(255,255,255,0.72)">—</div>
+        <button class="drilldown-btn" data-metric="improvement" style="margin-top:8px;background:none;border:none;color:#66fcf1;cursor:pointer;">🔎 Drill‑down</button>
     </div>
 
   </section>
@@ -111,6 +114,17 @@
   <script src="progress.js"></script>
   <script src="quizProgress.js"></script>
   <script src="dashboardProgress.js"></script>
+  <!-- Drill‑down modal (initially hidden) -->
+  <div id="drilldownModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close-btn" id="modalCloseBtn">&times;</span>
+      <h3 id="modalTitle" style="margin-top:0;color:#fff;">Detail</h3>
+      <canvas id="modalChart" style="width:100%;height:200px"></canvas>
+      <div id="modalExplanation" style="margin-top:12px;color:rgba(255,255,255,0.85);font-size:0.95rem;line-height:1.4"></div>
+    </div>
+  </div>
+  <script src="chart-utils.js"></script>
+  <script src="metricExplain.js"></script>
 </body>
 </html>
 
