@@ -1,7 +1,7 @@
 // chart-utils.js – Simple line chart helper using Canvas 2D
 // Assumes data points are numeric values between 0 and 1 (e.g., accuracy)
 
-export function drawLineChart(canvas, labels, values) {
+window.drawLineChart = function(canvas, labels, values) {
   if (!canvas || !labels || !values) return;
   const ctx = canvas.getContext('2d');
   const width = canvas.width;

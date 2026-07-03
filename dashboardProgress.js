@@ -412,6 +412,58 @@
   });
 
   // Expose for debugging (optional)
-  window.dashboardProgress = { renderAll, initByRole };
+  function openDrilldown(metric) {
+    const modal = document.getElementById('drilldownModal');
+    const title = document.getElementById('modalTitle');
+    const canvas = document.getElementById('modalChart');
+    const explanationDiv = document.getElementById('modalExplanation');
+
+    title.textContent = `Drill‑down: ${metric.charAt(0).toUpperCase() + metric.slice(1)}`;
+
+    // Simple demo data: last 7 days random values
+    const labels = [];
+    const values = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+      const base = window.quizProgress?.getOverallAccuracy?.()?.accuracy || 0.6;
+      const jitter = (Math.random() - 0.5) * 0.2;
+      values.push(Math.min(1, Math.max(0, base + jitter)));
+    }
+
+    if (typeof ensureCanvasResolution === 'function') {
+      ensureCanvasResolution(canvas, 200);
+    }
+
+    if (typeof window.drawLineChart === 'function') {
+      window.drawLineChart(canvas, labels, values);
+    }
+
+    const explanation = typeof window.explainMetric === 'function'
+      ? window.explainMetric(metric, { summary: values.map(v => Math.round(v * 100) + '%').join(', ') })
+      : '';
+    explanationDiv.textContent = explanation;
+
+    modal.style.display = 'block';
+  }
+
+  const closeBtn = document.getElementById('modalCloseBtn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      const modal = document.getElementById('drilldownModal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
+  document.addEventListener('click', e => {
+    const target = e.target;
+    if (target && target.matches('.drilldown-btn')) {
+      openDrilldown(target.dataset.metric);
+    }
+  });
+
+  window.dashboardProgress = { renderAll, initByRole, openDrilldown };
 })();
 
