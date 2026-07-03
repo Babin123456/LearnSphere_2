@@ -1,15 +1,4 @@
-/**
- * dashboardProgress.js — Parent/Teacher Progress Dashboard (read-only)
- *
- * Renders analytics using quizProgress.js localStorage data:
- * - Accuracy trend chart (last 14 days)
- * - Weak-topic recommendations
- * - Topic-wise accuracy + attempts summary
- * - Streak + overall accuracy KPI
- *
- * Works in demo mode (single learner) via localStorage.
- */
-
+// src/dashboardProgress.js – moved from root
 (function () {
   /**
    * Progress Analytics Dashboard (extended)
@@ -138,8 +127,8 @@
       const quizGoalProgress = qDone / 1;
       const reviewGoalProgress = rDone / 10;
       dailyGoalPct = Math.min(100, Math.round(Math.max(quizGoalProgress, reviewGoalProgress) * 100));
-      dailyGoalMetaText = dailyGoalPct >= 100 
-        ? `🎉 Goal Achieved! (${qDone}/1 quiz, ${rDone}/10 reviewed)` 
+      dailyGoalMetaText = dailyGoalPct >= 100
+        ? `🎉 Goal Achieved! (${qDone}/1 quiz, ${rDone}/10 reviewed)`
         : `${qDone}/1 quiz, ${rDone}/10 reviewed today`;
     } else {
       const streak = window.quizProgress?.getStreak?.();
@@ -235,7 +224,7 @@
       row.innerHTML = `
         <div style="min-width: 210px; font-weight: 600">${t.label}</div>
         <div class="bar" aria-label="accuracy bar">
-          <i style="width:${barW}%; background:${accuracy == null ? "rgba(255,255,255,0.22)" : "#66fcf1"}"></i>
+          <i style="width:${barW}%; background:${accuracy == null ? "rgba(255,255,255,0.22)" : "#66fcf1"}"</i>
         </div>
         <div style="min-width: 92px; text-align:right">
           <div style="font-weight:700">${accuracy == null ? "—" : pct(accuracy)}</div>
@@ -306,7 +295,7 @@
 
         const accuracy = s.attempts > 0 ? s.correct / s.attempts : 0;
         const pctValue = Math.round(accuracy * 100);
-        
+
         let barColor = "#ef4444";
         if (pctValue >= 80) {
           barColor = "#66fcf1";
@@ -327,7 +316,7 @@
         row.innerHTML = `
           <div style="min-width: 210px; font-weight: 600; font-size: 0.9rem; color: #fff;">${s.label}</div>
           <div class="bar" aria-label="mastery bar" style="flex: 1; height: 8px; background: rgba(255, 255, 255, 0.05); margin: 0 12px; border-radius: 999px; overflow: hidden;">
-            <i style="display: block; height: 100%; width:${pctValue}%; background:${barColor}; border-radius: 999px;"></i>
+            <i style="display: block; height: 100%; width:${pctValue}%; background:${barColor}; border-radius: 999px;"</i>
           </div>
           <div style="min-width: 90px; text-align:right; font-size: 0.9rem;">
             <div style="font-weight:700; color: ${barColor};">${pctValue}%</div>
@@ -343,14 +332,14 @@
     }
 
     const weakSkills = window.quizProgress.getWeakestSkills({ limit: 3 });
-    
+
     weakSkillsEl.innerHTML = "";
     if (!weakSkills || weakSkills.length === 0) {
       weakSkillsEl.innerHTML = `<div class="muted" style="font-size:13px; color:rgba(255,255,255,0.72)">No weak concepts identified yet.</div>`;
     } else {
       weakSkills.forEach(ws => {
         const accuracyPct = ws.attempts > 0 ? `${Math.round(ws.accuracy * 100)}%` : "Not attempted";
-        
+
         const card = document.createElement("div");
         card.style.background = "rgba(255, 255, 255, 0.02)";
         card.style.border = "1px solid rgba(255, 255, 255, 0.06)";
@@ -373,7 +362,7 @@
           <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
             <div style="font-weight: 600; font-size: 0.95rem; color: #fff;">${ws.label}</div>
             <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.65);">
-              Accuracy: <span style="font-weight:bold; color: ${statusColor}">${accuracyPct}</span> 
+              Accuracy: <span style="font-weight:bold; color: ${statusColor}">${accuracyPct}</span>
               ${ws.attempts > 0 ? `(${ws.attempts} attempts)` : ""}
             </div>
           </div>
@@ -384,7 +373,6 @@
   }
 
   function renderAll(root) {
-    // Guard: quizProgress must be loaded
     if (!window.quizProgress) {
       const status = root.querySelector("#dashboardStatus");
       if (status) status.textContent = "Progress data not available.";
@@ -399,11 +387,8 @@
   }
 
   function initByRole() {
-    // Detect a container we can render into.
-    // parents.html / teachers.html will use the same structure.
     const root = document.querySelector("[data-progress-dashboard='1']");
     if (!root) return;
-
     renderAll(root);
   }
 
@@ -411,7 +396,6 @@
     initByRole();
   });
 
-  // Expose for debugging (optional)
   function openDrilldown(metric) {
     const modal = document.getElementById('drilldownModal');
     const title = document.getElementById('modalTitle');
@@ -420,7 +404,6 @@
 
     title.textContent = `Drill‑down: ${metric.charAt(0).toUpperCase() + metric.slice(1)}`;
 
-    // Simple demo data: last 7 days random values
     const labels = [];
     const values = [];
     const now = new Date();
@@ -466,4 +449,3 @@
 
   window.dashboardProgress = { renderAll, initByRole, openDrilldown };
 })();
-
