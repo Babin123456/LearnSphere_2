@@ -132,12 +132,6 @@
     return store;
   }
 
-  function escapeHTML(str) {
-    const div = document.createElement("div");
-    div.appendChild(document.createTextNode(String(str)));
-    return div.innerHTML;
-  }
-
   function ensurePanel() {
     // We inject the bell + panel only once.
     const root = document;
@@ -158,34 +152,70 @@
       panel.style.borderRadius = "14px";
       panel.style.boxShadow = "0 18px 60px rgba(0,0,0,0.45)";
 
-      panel.innerHTML = `
-        <div style="padding:12px 12px 10px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:10px;">
-          <div style="font-weight:800;">🔔 ${_t("notifications.panelTitle")}</div>
+      const header = document.createElement("div");
+      header.style.padding = "12px 12px 10px";
+      header.style.borderBottom = "1px solid rgba(255,255,255,0.08)";
+      header.style.display = "flex";
+      header.style.alignItems = "center";
+      header.style.justifyContent = "space-between";
+      header.style.gap = "10px";
 
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button id="notifications-mark-all" style="background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.9); border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:700; font-size:12px;">${_t("notifications.markAllRead")}</button>
-            <button id="notifications-close" aria-label="${_t("notifications.close")}" style="background: transparent; border:1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.9); border-radius:10px; padding:6px 10px; cursor:pointer; font-weight:900; font-size:12px;">✕</button>
+      const title = document.createElement("div");
+      title.style.fontWeight = "800";
+      title.textContent = `🔔 ${_t("notifications.panelTitle")}`;
 
-          </div>
-        </div>
-        <div id="notifications-list" style="padding:10px; display:flex; flex-direction:column; gap:10px;">
-        </div>
-      `;
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "8px";
+      actions.style.alignItems = "center";
 
+      const btnAll = document.createElement("button");
+      btnAll.id = "notifications-mark-all";
+      btnAll.style.background = "rgba(255,255,255,0.06)";
+      btnAll.style.border = "1px solid rgba(255,255,255,0.10)";
+      btnAll.style.color = "rgba(255,255,255,0.9)";
+      btnAll.style.borderRadius = "10px";
+      btnAll.style.padding = "6px 10px";
+      btnAll.style.cursor = "pointer";
+      btnAll.style.fontWeight = "700";
+      btnAll.style.fontSize = "12px";
+      btnAll.textContent = _t("notifications.markAllRead");
+
+      const btnClose = document.createElement("button");
+      btnClose.id = "notifications-close";
+      btnClose.setAttribute("aria-label", _t("notifications.close"));
+      btnClose.style.background = "transparent";
+      btnClose.style.border = "1px solid rgba(255,255,255,0.18)";
+      btnClose.style.color = "rgba(255,255,255,0.9)";
+      btnClose.style.borderRadius = "10px";
+      btnClose.style.padding = "6px 10px";
+      btnClose.style.cursor = "pointer";
+      btnClose.style.fontWeight = "900";
+      btnClose.style.fontSize = "12px";
+      btnClose.textContent = "✕";
+
+      actions.appendChild(btnAll);
+      actions.appendChild(btnClose);
+      header.appendChild(title);
+      header.appendChild(actions);
+
+      const list = document.createElement("div");
+      list.id = "notifications-list";
+      list.style.padding = "10px";
+      list.style.display = "flex";
+      list.style.flexDirection = "column";
+      list.style.gap = "10px";
+
+      panel.appendChild(header);
+      panel.appendChild(list);
       document.body.appendChild(panel);
 
-      const btnAll = document.getElementById("notifications-mark-all");
-      if (btnAll) {
-        btnAll.addEventListener("click", () => {
-          markAllRead();
-          render();
-        });
-      }
+      btnAll.addEventListener("click", () => {
+        markAllRead();
+        render();
+      });
 
-      const btnClose = document.getElementById("notifications-close");
-      if (btnClose) {
-        btnClose.addEventListener("click", () => hidePanel());
-      }
+      btnClose.addEventListener("click", () => hidePanel());
 
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") hidePanel();
@@ -210,17 +240,19 @@
     const listEl = document.getElementById("notifications-list");
     if (!listEl) return;
 
-    if (!notifications || notifications.length === 0) {
-      listEl.innerHTML = `
-        <div style="color: rgba(255,255,255,0.65); font-size:13px; padding:10px;">
-          ${_t("notifications.empty")}
-        </div>
-      `;
+    // Clear list (no HTML injection)
+    while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
 
+
+    if (!notifications || notifications.length === 0) {
+      const empty = document.createElement("div");
+      empty.style.color = "rgba(255,255,255,0.65)";
+      empty.style.fontSize = "13px";
+      empty.style.padding = "10px";
+      empty.textContent = _t("notifications.empty");
+      listEl.appendChild(empty);
       return;
     }
-
-    listEl.innerHTML = "";
 
     notifications.slice(0, 25).forEach((n) => {
       const isUnread = !n.readAt;
@@ -231,46 +263,113 @@
       item.style.border = "1px solid rgba(255,255,255,0.08)";
       item.style.background = isUnread ? "rgba(102,252,241,0.06)" : "rgba(255,255,255,0.03)";
 
-      const title = escapeHTML(n.title || _t("notifications.defaultTitle"));
+      // Top row
+      const top = document.createElement("div");
+      top.style.display = "flex";
+      top.style.justifyContent = "space-between";
+      top.style.gap = "10px";
+      top.style.alignItems = "flex-start";
 
-      const msg = escapeHTML(n.message || "");
+      const left = document.createElement("div");
 
-      item.innerHTML = `
-        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-          <div>
-            <div style="font-weight:900; color: ${isUnread ? "#66fcf1" : "rgba(255,255,255,0.95)"}; font-size:13px;">${title}</div>
-            <div style="margin-top:4px; color: rgba(255,255,255,0.78); font-size:12.5px; line-height:1.35;">${msg}</div>
-          </div>
-          <div style="font-size:11px; color: rgba(255,255,255,0.55); white-space:nowrap;">${new Date(n.createdAt).toLocaleString()}</div>
-        </div>
-        ${n.ctaUrl ? `
-          <div style="margin-top:10px; display:flex; justify-content:flex-end;">
-            <a href="${escapeHTML(n.ctaUrl)}" style="text-decoration:none; background: rgba(102,252,241,0.10); border:1px solid rgba(102,252,241,0.35); color:#66fcf1; padding:7px 10px; border-radius:10px; font-weight:900; font-size:12px;">${_t("notifications.open")}</a>
+      const titleEl = document.createElement("div");
+      titleEl.style.fontWeight = "900";
+      titleEl.style.color = isUnread ? "#66fcf1" : "rgba(255,255,255,0.95)";
+      titleEl.style.fontSize = "13px";
+      titleEl.textContent = n.title || _t("notifications.defaultTitle");
 
-          </div>
-        ` : ""}
-        ${isUnread ? `
-          <div style="margin-top:10px; display:flex; justify-content:flex-end;">
-            <button data-notif-id="${escapeHTML(n.id)}" style="background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.9); border-radius:10px; padding:7px 10px; cursor:pointer; font-weight:900; font-size:12px;">${_t("notifications.markRead")}</button>
+      const msgEl = document.createElement("div");
+      msgEl.style.marginTop = "4px";
+      msgEl.style.color = "rgba(255,255,255,0.78)";
+      msgEl.style.fontSize = "12.5px";
+      msgEl.style.lineHeight = "1.35";
+      msgEl.textContent = n.message || "";
 
-          </div>
-        ` : ""}
-      `;
+      left.appendChild(titleEl);
+      left.appendChild(msgEl);
 
-      if (isUnread) {
-        const markBtn = item.querySelector("button[data-notif-id]");
-        if (markBtn) {
-          markBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const id = markBtn.getAttribute("data-notif-id");
-            if (id) markReadById(id);
-            renderBadgeOnly();
-            render();
-          });
-        }
+      const timeEl = document.createElement("div");
+      timeEl.style.fontSize = "11px";
+      timeEl.style.color = "rgba(255,255,255,0.55)";
+      timeEl.style.whiteSpace = "nowrap";
+      try {
+        timeEl.textContent = new Date(n.createdAt).toLocaleString();
+      } catch {
+        timeEl.textContent = "";
       }
 
-      // Clicking item title could also mark read; keep it minimal.
+      top.appendChild(left);
+      top.appendChild(timeEl);
+
+      item.appendChild(top);
+
+      // CTA link (safe attributes; no HTML injection)
+      if (n.ctaUrl) {
+        const ctaWrap = document.createElement("div");
+        ctaWrap.style.marginTop = "10px";
+        ctaWrap.style.display = "flex";
+        ctaWrap.style.justifyContent = "flex-end";
+
+        const a = document.createElement("a");
+        a.textContent = _t("notifications.open");
+        a.setAttribute("rel", "noopener noreferrer");
+        a.style.textDecoration = "none";
+        a.style.background = "rgba(102,252,241,0.10)";
+        a.style.border = "1px solid rgba(102,252,241,0.35)";
+        a.style.color = "#66fcf1";
+        a.style.padding = "7px 10px";
+        a.style.borderRadius = "10px";
+        a.style.fontWeight = "900";
+        a.style.fontSize = "12px";
+
+        // Allow only relative/absolute same-origin URLs to avoid javascript: etc.
+        try {
+          const parsed = new URL(String(n.ctaUrl), window.location.origin);
+          if (parsed.origin === window.location.origin) {
+            a.href = parsed.pathname + parsed.search + parsed.hash;
+          } else {
+            a.href = "#";
+          }
+        } catch {
+          a.href = "#";
+        }
+
+        ctaWrap.appendChild(a);
+        item.appendChild(ctaWrap);
+      }
+
+      // Mark read button
+      if (isUnread) {
+        const markWrap = document.createElement("div");
+        markWrap.style.marginTop = "10px";
+        markWrap.style.display = "flex";
+        markWrap.style.justifyContent = "flex-end";
+
+        const markBtn = document.createElement("button");
+        markBtn.type = "button";
+        markBtn.textContent = _t("notifications.markRead");
+        markBtn.dataset.notifId = String(n.id);
+        markBtn.style.background = "rgba(255,255,255,0.06)";
+        markBtn.style.border = "1px solid rgba(255,255,255,0.10)";
+        markBtn.style.color = "rgba(255,255,255,0.9)";
+        markBtn.style.borderRadius = "10px";
+        markBtn.style.padding = "7px 10px";
+        markBtn.style.cursor = "pointer";
+        markBtn.style.fontWeight = "900";
+        markBtn.style.fontSize = "12px";
+
+        markBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = markBtn.dataset.notifId;
+          if (id) markReadById(id);
+          renderBadgeOnly();
+          render();
+        });
+
+        markWrap.appendChild(markBtn);
+        item.appendChild(markWrap);
+      }
+
       listEl.appendChild(item);
     });
   }
@@ -320,25 +419,56 @@
     wrapper.style.alignItems = "center";
     wrapper.style.gap = "8px";
 
-    wrapper.innerHTML = `
-      <button id="notifications-bell" aria-label="Open notifications" style="background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.92); border-radius:12px; padding:8px 12px; cursor:pointer; font-weight:900; display:flex; align-items:center; gap:8px;">
-        <span>🔔</span>
-        <span style="display:none;">Notifications</span>
-        <span id="notifications-badge-count" style="display:none; min-width:20px; height:20px; padding:0 6px; background:#ff4500; color:#fff; border-radius:999px; align-items:center; justify-content:center; font-size:12px; font-weight:900;">0</span>
-      </button>
-    `;
+    const bellBtn = document.createElement("button");
+    bellBtn.id = "notifications-bell";
+    bellBtn.type = "button";
+    bellBtn.setAttribute("aria-label", "Open notifications");
+    bellBtn.style.background = "rgba(255,255,255,0.06)";
+    bellBtn.style.border = "1px solid rgba(255,255,255,0.14)";
+    bellBtn.style.color = "rgba(255,255,255,0.92)";
+    bellBtn.style.borderRadius = "12px";
+    bellBtn.style.padding = "8px 12px";
+    bellBtn.style.cursor = "pointer";
+    bellBtn.style.fontWeight = "900";
+    bellBtn.style.display = "flex";
+    bellBtn.style.alignItems = "center";
+    bellBtn.style.gap = "8px";
+
+    const icon = document.createElement("span");
+    icon.textContent = "🔔";
+
+    const hiddenLabel = document.createElement("span");
+    hiddenLabel.style.display = "none";
+    hiddenLabel.textContent = "Notifications";
+
+    const badge = document.createElement("span");
+    badge.id = "notifications-badge-count";
+    badge.style.display = "none";
+    badge.style.minWidth = "20px";
+    badge.style.height = "20px";
+    badge.style.padding = "0 6px";
+    badge.style.background = "#ff4500";
+    badge.style.color = "#fff";
+    badge.style.borderRadius = "999px";
+    badge.style.alignItems = "center";
+    badge.style.justifyContent = "center";
+    badge.style.fontSize = "12px";
+    badge.style.fontWeight = "900";
+    badge.textContent = "0";
+
+    bellBtn.appendChild(icon);
+    bellBtn.appendChild(hiddenLabel);
+    bellBtn.appendChild(badge);
+    wrapper.appendChild(bellBtn);
 
     anchor.appendChild(wrapper);
 
-    const bellBtn = document.getElementById("notifications-bell");
-    if (bellBtn) {
-      bellBtn.addEventListener("click", () => {
-        const panel = document.getElementById("notifications-panel");
-        const isOpen = panel && panel.style.display === "block";
-        if (isOpen) hidePanel();
-        else showPanel();
-      });
-    }
+    bellBtn.addEventListener("click", () => {
+      const panel = document.getElementById("notifications-panel");
+      const isOpen = panel && panel.style.display === "block";
+      if (isOpen) hidePanel();
+      else showPanel();
+    });
 
     // Clicking outside closes panel
     document.addEventListener("click", (e) => {
