@@ -150,6 +150,145 @@
     }
   }
 
+  // ------------------------------
+  // Dialog helpers (focus trap + escape + restore focus)
+  // ------------------------------
+  function getFocusableElementsWithin(root) {
+    if (!root) return [];
+    const selector = [
+      'a[href]:not([tabindex="-1"])',
+      'button:not([disabled]):not([tabindex="-1"])',
+      'textarea:not([disabled]):not([tabindex="-1"])',
+      'input:not([disabled]):not([type="hidden"]):not([tabindex="-1"])',
+      'select:not([disabled]):not([tabindex="-1"])',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+
+    const nodes = Array.from(root.querySelectorAll(selector));
+    // filter out hidden elements
+    return nodes.filter((el) => {
+      const style = window.getComputedStyle(el);
+      return style && style.visibility !== 'hidden' && style.display !== 'none';
+    });
+  }
+
+  function trapFocusWithinDialog(event, dialogEl) {
+    if (!dialogEl) return;
+    if (event.key !== 'Tab') return;
+
+    const focusables = getFocusableElementsWithin(dialogEl);
+    if (!focusables.length) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey) {
+      if (active === first || !dialogEl.contains(active)) {
+        event.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last || !dialogEl.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
+  function openDialog(dialogEl, { initialFocusId = null, returnFocusToEl = null } = {}) {
+    if (!dialogEl) return;
+
+    // Store restore target each open so focus is predictable.
+    if (returnFocusToEl) {
+      dialogEl.dataset.restoreFocusId = returnFocusToEl.id || '';
+    } else if (document.activeElement) {
+      dialogEl.dataset.restoreFocusId = document.activeElement.id || '';
+    } else {
+      dialogEl.dataset.restoreFocusId = '';
+    }
+
+    dialogEl.style.display = 'block';
+    if (dialogEl.classList.contains('hidden')) dialogEl.classList.remove('hidden');
+
+    // Ensure only one focus trap handler is attached.
+    if (!dialogEl._lsTrapHandlerBound) {
+      const handler = (e) => trapFocusWithinDialog(e, dialogEl);
+      dialogEl._lsTrapHandlerBound = true;
+      dialogEl._lsTrapHandler = handler;
+      dialogEl.addEventListener('keydown', handler);
+    }
+
+    const focusTarget = initialFocusId ? dialogEl.querySelector(`#${CSS.escape(initialFocusId)}`) : null;
+    const focusables = getFocusableElementsWithin(dialogEl);
+    const firstFocusable = focusables[0];
+
+    // Prefer explicit focus target, else first focusable, else dialog itself.
+    (focusTarget || firstFocusable || dialogEl).focus?.();
+
+    dialogEl.dataset.dialogOpen = 'true';
+
+    // Escape closes dialog.
+    function onDocKeyDown(e) {
+      if (e.key !== 'Escape') return;
+      if (dialogEl.dataset.dialogOpen !== 'true') return;
+      e.preventDefault();
+      closeDialog(dialogEl);
+    }
+
+    if (dialogEl._lsOnEscape) {
+      document.removeEventListener('keydown', dialogEl._lsOnEscape);
+    }
+
+    dialogEl._lsOnEscape = onDocKeyDown;
+    document.addEventListener('keydown', onDocKeyDown);
+  }
+
+  function closeDialog(dialogEl) {
+    if (!dialogEl) return;
+    dialogEl.dataset.dialogOpen = 'false';
+
+    dialogEl.style.display = 'none';
+    if (!dialogEl.classList.contains('hidden')) dialogEl.classList.add('hidden');
+
+    if (dialogEl._lsTrapHandlerBound && dialogEl._lsTrapHandler) {
+      // keep trap handler attached; it is lightweight. No need to remove.
+    }
+
+    // Remove escape handler.
+    if (dialogEl._lsOnEscape) {
+      document.removeEventListener('keydown', dialogEl._lsOnEscape);
+      dialogEl._lsOnEscape = null;
+    }
+
+    // Restore focus.
+    const restoreId = dialogEl.dataset.restoreFocusId;
+    if (restoreId) {
+      const el = document.getElementById(restoreId);
+      if (el && typeof el.focus === 'function') el.focus();
+      return;
+    }
+
+    // Fallback: focus first focusable on page body.
+    const bodyFocusable = getFocusableElementsWithin(document.body)[0];
+    if (bodyFocusable && typeof bodyFocusable.focus === 'function') bodyFocusable.focus();
+  }
+
+  function focusResultHeading(resultEl, headingId = null) {
+    if (!resultEl) return;
+    if (headingId) {
+      const el = resultEl.querySelector(`#${CSS.escape(headingId)}`);
+      if (el) el.focus?.();
+      return;
+    }
+    // If it has tabindex="-1" focusable heading use first heading.
+    const focusable = resultEl.querySelector('[tabindex="-1"]');
+    (focusable || resultEl.querySelector('h1,h2,h3') || resultEl).focus?.();
+  }
+
   // Detect reduced motion preference and add a class to the body.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.body.classList.add('prefers-reduced-motion');
