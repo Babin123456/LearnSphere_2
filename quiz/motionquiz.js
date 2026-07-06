@@ -45,6 +45,7 @@ function loadQuestion() {
     let optionsContainer = document.getElementById("options");
     optionsContainer.innerHTML = "";
 
+    let fragment = document.createDocumentFragment();
     questionData.options.forEach(option => {
         let btn = document.createElement("button");
         btn.classList.add("option");
@@ -54,10 +55,11 @@ function loadQuestion() {
         btn.setAttribute("role", "radio");
         btn.setAttribute("aria-checked", "false");
 
-        btn.onclick = () => selectOption(btn, option);
+        
 
-        optionsContainer.appendChild(btn);
+        fragment.appendChild(btn);
     });
+    optionsContainer.appendChild(fragment);
 
     selectedOption = userSelectionsByStep[currentStepIndex] || null;
 
@@ -284,6 +286,16 @@ function startAdaptiveSession() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const optContainer = document.getElementById("options");
+    if (optContainer && !optContainer.dataset.delegated) {
+        optContainer.dataset.delegated = "true";
+        optContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("option")) {
+                selectOption(e.target, e.target.textContent);
+            }
+        });
+    }
+
     window.__quizMotionStartedAt = Date.now();
     // Initialize accessibility utilities
     if (window.initQuizAccessibility) {

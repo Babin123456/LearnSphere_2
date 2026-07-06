@@ -69,13 +69,15 @@ function loadQuestion() {
     let optionsContainer = document.getElementById("options");
     optionsContainer.innerHTML = "";
 
+    let fragment = document.createDocumentFragment();
     questionData.options.forEach(option => {
         let btn = document.createElement("button");
         btn.classList.add("option");
         btn.textContent = option;
-        btn.onclick = () => selectOption(btn, option);
-        optionsContainer.appendChild(btn);
+        
+        fragment.appendChild(btn);
     });
+    optionsContainer.appendChild(fragment);
 
     selectedOption = null;
     document.getElementById("next-btn").disabled = true;
@@ -184,6 +186,16 @@ function updateProgressBar() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const optContainer = document.getElementById("options");
+    if (optContainer && !optContainer.dataset.delegated) {
+        optContainer.dataset.delegated = "true";
+        optContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("option")) {
+                selectOption(e.target, e.target.textContent);
+            }
+        });
+    }
+
     document.getElementById("progress-bar").style.width = "0%";
     loadQuestion();
 });
