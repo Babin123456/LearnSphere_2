@@ -47,8 +47,8 @@ function loadQuestion() {
         btn.setAttribute("role", "radio");
         btn.setAttribute("aria-checked", "false");
 
-        btn.onclick = () => selectOption(btn, option);
-        optionsContainer.appendChild(btn);
+        
+        fragment.appendChild(btn);
     });
 
 
@@ -284,6 +284,16 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+    const optContainer = document.getElementById("options");
+    if (optContainer && !optContainer.dataset.delegated) {
+        optContainer.dataset.delegated = "true";
+        optContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("option")) {
+                selectOption(e.target, e.target.textContent);
+            }
+        });
+    }
+
     // Initialize accessibility utilities
     if (window.initQuizAccessibility) {
         window.initQuizAccessibility();
