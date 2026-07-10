@@ -479,11 +479,28 @@
     return modal;
   }
 
-  function renderQuiz({ topicId, topicLabel }) {
+  function renderQuiz({ topicId, topicLabel, retryQids }) {
     const modal = ensureModal();
     if (!modal) return;
 
-    const quiz = getReviewQuiz(topicId);
+    let quiz = getReviewQuiz(topicId);
+    if (Array.isArray(retryQids) && retryQids.length > 0) {
+      quiz = retryQids.map(item => {
+        if (item && typeof item === "object") {
+          return {
+            __qid: item.qid,
+            topicId: topicId,
+            q: item.q || item.question,
+            options: item.options,
+            answerIndex: typeof item.answerIndex === "number" ? item.answerIndex : item.options.indexOf(item.answer),
+            explanation: item.explanation || ""
+          };
+        } else {
+          return quiz.find(q => q.__qid === item);
+        }
+      }).filter(Boolean);
+    }
+
     const modalTitle = document.getElementById("reviewModalTitle");
     const container = document.getElementById("reviewQuizContainer");
     const msg = document.getElementById("reviewResultMessage");
@@ -576,7 +593,26 @@
     const total = questions.length;
 
     const topicId = container.dataset.topicId;
-    const quiz = getReviewQuiz(topicId);
+    const isRetry = container.dataset.isRetry === "true";
+    const retryQids = container.dataset.retryQids ? JSON.parse(container.dataset.retryQids) : [];
+
+    const quiz = isRetry && retryQids.length > 0 
+      ? retryQids.map(item => {
+          if (item && typeof item === "object") {
+            return {
+              __qid: item.qid,
+              topicId: topicId,
+              q: item.q || item.question,
+              options: item.options,
+              answerIndex: typeof item.answerIndex === "number" ? item.answerIndex : item.options.indexOf(item.answer),
+              explanation: item.explanation || ""
+            };
+          } else {
+            const fullQuiz = getReviewQuiz(topicId);
+            return fullQuiz.find(q => q.__qid === item);
+          }
+        }).filter(Boolean)
+      : getReviewQuiz(topicId);
 
     let correctCount = 0;
     let answeredCount = 0;
@@ -595,30 +631,60 @@
     return { scorePct, correctCount, total, answeredCount };
   }
 
-  function start(topicId) {
+  function start(topicId, options = {}) {
     const topicsList = getTopicsList();
     const foundTopic = topicsList.find(t => t.id === topicId);
     const topicLabel = foundTopic ? foundTopic.label : topicId;
 
     const modal = ensureModal();
     const container = document.getElementById("reviewQuizContainer");
-    if (container) container.dataset.topicId = topicId;
+    if (container) {
+      container.dataset.topicId = topicId;
+      if (options.retryQids) {
+        container.dataset.isRetry = "true";
+        container.dataset.retryQids = JSON.stringify(options.retryQids);
+      } else {
+        delete container.dataset.isRetry;
+        delete container.dataset.retryQids;
+      }
+    }
 
-    renderQuiz({ topicId, topicLabel });
+    renderQuiz({ topicId, topicLabel, retryQids: options.retryQids });
 
     const submitBtn = document.getElementById("reviewSubmitBtn");
     if (submitBtn) {
       submitBtn.onclick = function () {
+        const isRetry = container.dataset.isRetry === "true";
+        const retryQids = container.dataset.retryQids ? JSON.parse(container.dataset.retryQids) : [];
+
         // Compute score and update summary
         const { scorePct, correctCount, total, answeredCount } = readQuizAnswers();
         const msg = document.getElementById("reviewResultMessage");
         if (msg) msg.textContent = `Score: ${correctCount}/${total} (${scorePct}%).`;
 
         // Render detailed per‑question results with an Ask button
-        const container = document.getElementById("reviewQuizContainer");
         if (container) {
           container.innerHTML = "";
-          const quiz = getReviewQuiz(topicId);
+          const quiz = isRetry && retryQids.length > 0 
+            ? retryQids.map(item => {
+                if (item && typeof item === "object") {
+                  return {
+                    __qid: item.qid,
+                    topicId: topicId,
+                    q: item.q || item.question,
+                    options: item.options,
+                    answerIndex: typeof item.answerIndex === "number" ? item.answerIndex : item.options.indexOf(item.answer),
+                    explanation: item.explanation || ""
+                  };
+                } else {
+                  const fullQuiz = getReviewQuiz(topicId);
+                  return fullQuiz.find(q => q.__qid === item);
+                }
+              }).filter(Boolean)
+            : getReviewQuiz(topicId);
+
+          const correctedQids = [];
+
           quiz.forEach((item, idx) => {
             const qDiv = document.createElement("div");
             qDiv.className = "review-question-result";
@@ -628,6 +694,10 @@
             const userIdx = selected ? Number(selected.value) : null;
             const userAns = userIdx !== null ? item.options[userIdx] : "<em>No answer</em>";
             const correct = userIdx === item.answerIndex;
+
+            if (correct) {
+              correctedQids.push(item.__qid);
+            }
 
             qDiv.innerHTML = `
               <div><strong>Q${idx + 1}:</strong> ${item.q}</div>
@@ -657,10 +727,33 @@
             qDiv.appendChild(askBtn);
             container.appendChild(qDiv);
           });
+
+          // If retry mode, update missed list
+          if (isRetry && correctedQids.length > 0) {
+            const MISSED_KEY = "learnsphere_review_missed_v1";
+            let map = {};
+            try {
+              map = JSON.parse(localStorage.getItem(MISSED_KEY)) || {};
+            } catch (e) {}
+
+            if (map[topicId] && Array.isArray(map[topicId].missedQids)) {
+              map[topicId].missedQids = map[topicId].missedQids.filter(item => {
+                const qid = (item && typeof item === "object") ? item.qid : item;
+                return !correctedQids.includes(qid);
+              });
+              map[topicId].updatedAt = Date.now();
+              try {
+                localStorage.setItem(MISSED_KEY, JSON.stringify(map));
+              } catch (e) {}
+            }
+            window.dispatchEvent(new Event("review-mistakes-retried"));
+          }
         }
 
-        // Persist the review result
-        recordReviewResult({ topicId, scorePct, answeredCount });
+        // Persist the review result only if NOT in retry mode
+        if (!isRetry) {
+          recordReviewResult({ topicId, scorePct, answeredCount });
+        }
 
         // Disable button to prevent double submission
         submitBtn.disabled = true;
@@ -921,6 +1014,7 @@
     start,
     closeModal,
     skipTopic,
-    initDashboard
+    initDashboard,
+    __getReviewQuizBank: getReviewQuiz
   };
 })();
