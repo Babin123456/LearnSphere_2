@@ -444,7 +444,10 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
 
   if (window.offlineSync && typeof window.offlineSync.queueProgressUpdate === "function") {
     if (!window.offlineSync.isOnline()) {
+      // Generate a stable attemptId for idempotent sync
+      const attemptId = `qa_${topicId}_${quizId || ""}_${now}_${correct}_${total}`;
       window.offlineSync.queueProgressUpdate("quiz_attempt", {
+        attemptId,
         topicId,
         score: got,
         totalQuestions: total,
@@ -844,7 +847,9 @@ function recordRetryAttempt({ topicId, results }) {
   // Queue for future backend sync when offline
   if (window.offlineSync && typeof window.offlineSync.queueProgressUpdate === "function") {
     if (!window.offlineSync.isOnline()) {
-      window.offlineSync.queueProgressUpdate("retry_attempt", { topicId, results });
+      // Generate a stable attemptId for retry attempts
+      const attemptId = `ra_${topicId}_${Date.now()}_${results.length}`;
+      window.offlineSync.queueProgressUpdate("retry_attempt", { attemptId, topicId, results });
     }
   }
 }

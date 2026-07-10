@@ -692,6 +692,89 @@
       checkAndTriggerAll();
     });
 
+    // ── Offline Smart Sync UI Notifications ──────────────────────
+    // Listen for sync lifecycle events from offlineSync.js and push
+    // in-app notifications so the user knows what's happening.
+
+    window.addEventListener("learnsphere:sync-start", (e) => {
+      const count = e.detail?.itemCount || 0;
+      if (count <= 0) return;
+      pushNotification({
+        type: "sync_status",
+        title: "🔄 Syncing progress…",
+        message: `Uploading ${count} queued update${count !== 1 ? "s" : ""} to the server.`,
+        dedupeKey: `sync-start-${Math.floor(Date.now() / 60000)}`, // Dedupe within 1 minute
+      });
+      // Re-render badge immediately
+      initUI();
+      render();
+    });
+
+    window.addEventListener("learnsphere:sync-complete", (e) => {
+      const synced = e.detail?.syncedCount || 0;
+      const failed = e.detail?.failedCount || 0;
+      if (synced <= 0 && failed <= 0) return;
+
+      if (failed > 0) {
+        pushNotification({
+          type: "sync_status",
+          title: "⚠️ Sync partially complete",
+          message: `${synced} update${synced !== 1 ? "s" : ""} synced, ${failed} failed. Failed items will be retried automatically.`,
+          dedupeKey: `sync-partial-${Math.floor(Date.now() / 60000)}`,
+        });
+      } else {
+        pushNotification({
+          type: "sync_status",
+          title: "✅ Progress synced!",
+          message: `${synced} queued update${synced !== 1 ? "s" : ""} successfully uploaded.`,
+          dedupeKey: `sync-complete-${Math.floor(Date.now() / 60000)}`,
+        });
+      }
+      initUI();
+      render();
+    });
+
+    window.addEventListener("learnsphere:sync-failed", (e) => {
+      const failed = e.detail?.failedCount || 0;
+      if (failed <= 0) return;
+      pushNotification({
+        type: "sync_status",
+        title: "❌ Sync failed",
+        message: `${failed} update${failed !== 1 ? "s" : ""} could not be synced after multiple retries. They will be retried when you're back online.`,
+        dedupeKey: `sync-failed-${Math.floor(Date.now() / 60000)}`,
+      });
+      initUI();
+      render();
+    });
+
+    // Listen for sync status messages from Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data?.action === "sync-status" && event.data.status === "syncing") {
+          // SW is telling us sync is starting — trigger a notification
+          const pending = window.offlineSync?.getQueueLength?.() || 0;
+          if (pending > 0) {
+            pushNotification({
+              type: "sync_status",
+              title: "🔄 Background sync in progress",
+              message: `Syncing ${pending} queued update${pending !== 1 ? "s" : ""} in the background.`,
+              dedupeKey: `bg-sync-${Math.floor(Date.now() / 60000)}`,
+            });
+            initUI();
+            render();
+          }
+        }
+
+        // SW is requesting queue status — respond via offlineSync
+        if (event.data?.action === "request-queue-status") {
+          const status = window.offlineSync?.getQueueStatus?.();
+          if (status && status.pending > 0) {
+            window.offlineSync?.flushQueue?.();
+          }
+        }
+      });
+    }
+
     window.notifications = {
       pushNotification,
       markAllRead,
