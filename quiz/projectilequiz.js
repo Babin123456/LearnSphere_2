@@ -1,9 +1,49 @@
 const questions = [
-    { difficulty: "easy", question: "What is the path of a projectile in ideal conditions?", options: ["Straight line", "Circular", "Parabolic", "Elliptical"], answer: "Parabolic" },
-    { difficulty: "easy", question: "What is the horizontal acceleration of a projectile in the absence of air resistance?", options: ["9.8 m/s²", "0 m/s²", "Depends on initial velocity", "Constant"], answer: "0 m/s²" },
-    { difficulty: "medium", question: "At the highest point of its trajectory, what is the vertical velocity of a projectile?", options: ["Maximum", "Zero", "Equal to initial velocity", "Depends on mass"], answer: "Zero" },
-    { difficulty: "medium", question: "Which factor affects the range of a projectile the most?", options: ["Mass", "Launch angle", "Time of flight", "Shape"], answer: "Launch angle" },
-    { difficulty: "hard", question: "What is the optimal angle for maximum range in projectile motion (neglecting air resistance)?", options: ["30°", "45°", "60°", "90°"], answer: "45°" }
+    {
+        difficulty: "easy",
+        topicId: "physics-projectile",
+        skillId: "projectile-trajectory",
+        skillLabel: "Projectile Trajectory",
+        question: "What is the path of a projectile in ideal conditions?",
+        options: ["Straight line", "Circular", "Parabolic", "Elliptical"],
+        answer: "Parabolic"
+    },
+    {
+        difficulty: "easy",
+        topicId: "physics-projectile",
+        skillId: "projectile-acceleration",
+        skillLabel: "Horizontal & Vertical Acceleration",
+        question: "What is the horizontal acceleration of a projectile in the absence of air resistance?",
+        options: ["9.8 m/s²", "0 m/s²", "Depends on initial velocity", "Constant"],
+        answer: "0 m/s²"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-projectile",
+        skillId: "projectile-velocity",
+        skillLabel: "Velocity at Peak",
+        question: "At the highest point of its trajectory, what is the vertical velocity of a projectile?",
+        options: ["Maximum", "Zero", "Equal to initial velocity", "Depends on mass"],
+        answer: "Zero"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-projectile",
+        skillId: "projectile-range-height",
+        skillLabel: "Range & Maximum Height",
+        question: "Which factor affects the range of a projectile the most?",
+        options: ["Mass", "Launch angle", "Time of flight", "Shape"],
+        answer: "Launch angle"
+    },
+    {
+        difficulty: "hard",
+        topicId: "physics-projectile",
+        skillId: "projectile-range-height",
+        skillLabel: "Range & Maximum Height",
+        question: "What is the optimal angle for maximum range in projectile motion (neglecting air resistance)?",
+        options: ["30°", "45°", "60°", "90°"],
+        answer: "45°"
+    }
 ];
 
 let adaptiveQuiz = null;

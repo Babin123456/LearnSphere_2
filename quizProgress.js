@@ -163,18 +163,21 @@ function _parseISODateToUTCStart(isoDateYYYYMMDD) {
 function _loadState() {
   try {
     const raw = localStorage.getItem(QUIZ_PROGRESS_KEY);
-    if (!raw) return { attempts: [], byTopic: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {} };
+    if (!raw) return { attempts: [], practiceAttempts: [], byTopic: {}, byTopicPractice: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {}, masteryPractice: {} };
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") {
-      return { attempts: [], byTopic: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {} };
+      return { attempts: [], practiceAttempts: [], byTopic: {}, byTopicPractice: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {}, masteryPractice: {} };
     }
     if (!Array.isArray(parsed.attempts)) parsed.attempts = [];
+    if (!Array.isArray(parsed.practiceAttempts)) parsed.practiceAttempts = [];
     if (!parsed.byTopic || typeof parsed.byTopic !== "object") parsed.byTopic = {};
+    if (!parsed.byTopicPractice || typeof parsed.byTopicPractice !== "object") parsed.byTopicPractice = {};
     if (!parsed.streak || typeof parsed.streak !== "object") parsed.streak = { lastPracticeDate: null, currentStreak: 0 };
     if (!parsed.mastery || typeof parsed.mastery !== "object") parsed.mastery = {};
+    if (!parsed.masteryPractice || typeof parsed.masteryPractice !== "object") parsed.masteryPractice = {};
     return parsed;
   } catch {
-    return { attempts: [], byTopic: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {} };
+    return { attempts: [], practiceAttempts: [], byTopic: {}, byTopicPractice: {}, streak: { lastPracticeDate: null, currentStreak: 0 }, mastery: {}, masteryPractice: {} };
   }
 }
 
@@ -233,7 +236,7 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
       const ans = resolvedAnswers[idx];
       if (ans !== undefined && ans !== null) {
         hasAnswers = true;
-        // Determine correct option (which might be index number or string)
+      // Determine correct option (which might be index number or string)
         const correctOption = typeof q.answer === 'number' && Array.isArray(q.options) ? q.options[q.answer] : q.answer;
         const isCorrect = ans === correctOption;
 
@@ -241,43 +244,51 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
           calculatedCorrect++;
         }
 
-        // Find skill from taxonomy mapping
+        // Resolve skill/topic using per-question metadata when available.
+        // Falls back to SKILL_TAXONOMY via question text (legacy quizzes).
+        const metaSkillId = q.skillId || null;
+        const metaTopicId = q.topicId || null;
+
         const qText = q.question ? q.question.trim() : "";
-        const taxonomyMatch = SKILL_TAXONOMY[qText];
-        if (taxonomyMatch) {
-          const sId = taxonomyMatch.skillId;
-          if (!state.mastery[sId]) {
-            state.mastery[sId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
-          }
-          state.mastery[sId].attempts += 1;
+        const taxonomyMatch = metaSkillId ? null : SKILL_TAXONOMY[qText];
+
+        const resolvedTopicId = metaTopicId || topicId;
+        const resolvedSkillId =
+          metaSkillId ||
+          taxonomyMatch?.skillId ||
+          (resolvedTopicId ? resolvedTopicId + "-general" : topicId + "-general");
+
+        const masteryObj = (window.quizProgress && window.quizProgress.mode === "practice")
+          ? (state.masteryPractice = state.masteryPractice || {})
+          : state.mastery;
+
+        if (!masteryObj[resolvedSkillId]) {
+          masteryObj[resolvedSkillId] = {
+            attempts: 0,
+            correct: 0,
+            lastAttemptAt: 0,
+            weaknessAttempts: 0,
+            weaknessCorrect: 0,
+          };
+        }
+
+        masteryObj[resolvedSkillId].attempts += 1;
+        if (isCorrect) {
+          masteryObj[resolvedSkillId].correct += 1;
+        }
+        masteryObj[resolvedSkillId].lastAttemptAt = now;
+
+        if (window.isWeaknessFocusMode) {
+          masteryObj[resolvedSkillId].weaknessAttempts = (masteryObj[resolvedSkillId].weaknessAttempts || 0) + 1;
           if (isCorrect) {
-            state.mastery[sId].correct += 1;
-          }
-          state.mastery[sId].lastAttemptAt = now;
-          if (window.isWeaknessFocusMode) {
-            state.mastery[sId].weaknessAttempts = (state.mastery[sId].weaknessAttempts || 0) + 1;
-            if (isCorrect) {
-              state.mastery[sId].weaknessCorrect = (state.mastery[sId].weaknessCorrect || 0) + 1;
-            }
-          }
-        } else {
-          // Fallback to topic-general skill if not mapped explicitly
-          const fallbackSkillId = topicId + "-general";
-          if (!state.mastery[fallbackSkillId]) {
-            state.mastery[fallbackSkillId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
-          }
-          state.mastery[fallbackSkillId].attempts += 1;
-          if (isCorrect) {
-            state.mastery[fallbackSkillId].correct += 1;
-          }
-          state.mastery[fallbackSkillId].lastAttemptAt = now;
-          if (window.isWeaknessFocusMode) {
-            state.mastery[fallbackSkillId].weaknessAttempts = (state.mastery[fallbackSkillId].weaknessAttempts || 0) + 1;
-            if (isCorrect) {
-              state.mastery[fallbackSkillId].weaknessCorrect = (state.mastery[fallbackSkillId].weaknessCorrect || 0) + 1;
-            }
+            masteryObj[resolvedSkillId].weaknessCorrect = (masteryObj[resolvedSkillId].weaknessCorrect || 0) + 1;
           }
         }
+
+        // Topic aggregates are updated below at attempt-level (state.byTopic[topicId])
+        // for backward compatibility. Per-question metadata primarily powers mastery +
+        // weakness scoring.
+        void resolvedTopicId;
       }
     });
   }
@@ -308,9 +319,13 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
   const timeMs = typeof timeTakenMs === "number" && timeTakenMs >= 0 ? timeTakenMs : null;
 
 
+  const topicObj = (window.quizProgress && window.quizProgress.mode === "practice")
+    ? (state.byTopicPractice = state.byTopicPractice || {})
+    : state.byTopic;
+
   // Topic aggregate init
-  if (!state.byTopic[topicId]) {
-    state.byTopic[topicId] = {
+  if (!topicObj[topicId]) {
+    topicObj[topicId] = {
       attempts: 0,
       bestScore: null,
       latestScore: null,
@@ -322,7 +337,7 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
     };
   }
 
-  const agg = state.byTopic[topicId];
+  const agg = topicObj[topicId];
   agg.attempts += 1;
   agg.bestScore = agg.bestScore === null ? got : Math.max(agg.bestScore, got);
   agg.latestScore = got;
@@ -346,7 +361,11 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
     return "unknown";
   })();
 
-  state.attempts.push({
+  const attemptsArray = (window.quizProgress && window.quizProgress.mode === "practice")
+    ? (state.practiceAttempts = state.practiceAttempts || [])
+    : state.attempts;
+
+  attemptsArray.push({
     topicId,
     quizId,
     questionType,
@@ -359,11 +378,17 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
     finishedAt: now,
     practiceDate: today,
     isWeaknessFocus: window.isWeaknessFocusMode || false,
+    mode: (window.quizProgress && window.quizProgress.mode) || "exam"
   });
 
   // Keep attempts bounded
-  if (state.attempts.length > 500) {
-    state.attempts = state.attempts.slice(state.attempts.length - 500);
+  if (attemptsArray.length > 500) {
+    const trimmed = attemptsArray.slice(attemptsArray.length - 500);
+    if (window.quizProgress && window.quizProgress.mode === "practice") {
+      state.practiceAttempts = trimmed;
+    } else {
+      state.attempts = trimmed;
+    }
   }
 
   // Update streak (daily practice)
@@ -758,6 +783,9 @@ function recordAttemptCanonical(canonicalAttempt) {
   });
 }
 
+const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+const initialMode = urlParams ? (urlParams.get("mode") === "practice" ? "practice" : "exam") : "exam";
+
 // Keep legacy recordAttempt but add canonical method.
 window.quizProgress = {
   QUIZ_TOPICS,
@@ -775,6 +803,8 @@ window.quizProgress = {
   getQuestionWeaknessWeight,
   recordRetryAttempt,
   getAttemptsHistory,
+  mode: initialMode,
+  logMistake,
   /** @returns {Object|null} offlineSync reference */
   get offlineSync() { return window.offlineSync || null; },
 };
@@ -826,6 +856,287 @@ if ("serviceWorker" in navigator) {
       if (window.offlineSync && typeof window.offlineSync.flushQueue === "function") {
         window.offlineSync.flushQueue();
       }
+    }
+  });
+}
+
+function logMistake(topicId, q) {
+  if (!topicId || !q) return;
+  const MISSED_KEY = "learnsphere_review_missed_v1";
+  let map = {};
+  try {
+    map = JSON.parse(localStorage.getItem(MISSED_KEY)) || {};
+  } catch (e) {}
+
+  if (!map[topicId]) {
+    map[topicId] = { missedQids: [], updatedAt: Date.now() };
+  }
+
+  const qText = (q.question || q.q || "").trim();
+  const qid = `${topicId}:quiz:${qText.replace(/\s+/g, '-').toLowerCase()}`;
+
+  const missedList = map[topicId].missedQids || [];
+  const exists = missedList.some(item => {
+    if (item && typeof item === 'object') {
+      return item.qid === qid;
+    }
+    return item === qid;
+  });
+
+  if (!exists) {
+    const qObj = {
+      qid: qid,
+      q: qText,
+      options: q.options,
+      answer: typeof q.answer === 'number' ? q.options[q.answer] : q.answer,
+      answerIndex: typeof q.answer === 'number' ? q.answer : q.options.indexOf(q.answer),
+      explanation: q.explanation || ""
+    };
+    missedList.push(qObj);
+    map[topicId].missedQids = missedList;
+    map[topicId].updatedAt = Date.now();
+    try {
+      localStorage.setItem(MISSED_KEY, JSON.stringify(map));
+    } catch (e) {
+      console.warn("LearnSphere: Could not save quiz mistake", e);
+    }
+  }
+}
+
+function getTopicIdFromUrl() {
+  const url = window.location.pathname;
+  if (url.includes("motionquiz")) return "physics-motion";
+  if (url.includes("nlmquiz")) return "physics-nlm";
+  if (url.includes("projectilequiz")) return "physics-projectile";
+  if (url.includes("rayquiz")) return "physics-ray";
+  if (url.includes("calculusquiz")) return "maths-calculus";
+  if (url.includes("vectorquiz")) return "maths-vectors";
+  if (url.includes("probabilityquiz")) return "maths-probability";
+  if (url.includes("geometryquiz")) return "maths-geometry";
+  if (url.includes("atomic_structurequiz")) return "chemistry-atomic";
+  if (url.includes("chemical_bondingquiz")) return "chemistry-bonding";
+  if (url.includes("equilibriumquiz")) return "chemistry-equil";
+  if (url.includes("thermoquiz")) return "chemistry-thermo";
+  return null;
+}
+
+function _injectModeSwitcher() {
+  if (typeof document === "undefined") return;
+
+  const target = document.querySelector(".progress-container") || document.getElementById("quiz-box");
+  if (!target) return; // Not on a quiz page
+
+  // Check if switcher already exists
+  if (document.getElementById("quiz-mode-switcher")) return;
+
+  // Insert beautiful premium glassmorphism CSS
+  const style = document.createElement("style");
+  style.textContent = `
+    .quiz-mode-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .mode-btn {
+        background: transparent;
+        color: #aaa;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .mode-btn.active {
+        background: linear-gradient(135deg, #00f2fe, #4facfe);
+        color: #000;
+        font-weight: 700;
+        border-color: transparent;
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .practice-feedback {
+        margin: 15px 0;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        line-height: 1.5;
+        text-align: left;
+        animation: slideDown 0.3s ease-out;
+    }
+    .practice-feedback.correct {
+        background: rgba(16, 185, 129, 0.1) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        color: #10b981 !important;
+    }
+    .practice-feedback.incorrect {
+        background: rgba(239, 68, 68, 0.1) !important;
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        color: #ef4444 !important;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  const switcher = document.createElement("div");
+  switcher.id = "quiz-mode-switcher";
+  switcher.className = "quiz-mode-container";
+  switcher.innerHTML = `
+    <button id="exam-mode-btn" class="mode-btn ${window.quizProgress.mode === 'exam' ? 'active' : ''}">Exam Mode 📝</button>
+    <button id="practice-mode-btn" class="mode-btn ${window.quizProgress.mode === 'practice' ? 'active' : ''}">Practice Mode 🎯</button>
+  `;
+
+  target.parentNode.insertBefore(switcher, target);
+
+  const examBtn = switcher.querySelector("#exam-mode-btn");
+  const practiceBtn = switcher.querySelector("#practice-mode-btn");
+
+  const changeMode = (newMode) => {
+    if (window.quizProgress.mode === newMode) return;
+    window.quizProgress.mode = newMode;
+
+    examBtn.classList.toggle("active", newMode === "exam");
+    practiceBtn.classList.toggle("active", newMode === "practice");
+
+    // Update query param in URL without full page reload
+    const url = new URL(window.location.href);
+    url.searchParams.set("mode", newMode);
+    window.history.replaceState({}, "", url);
+
+    // Call restartQuiz to restart in the correct mode
+    if (typeof window.restartQuiz === "function") {
+      window.restartQuiz();
+    }
+  };
+
+  examBtn.addEventListener("click", () => changeMode("exam"));
+  practiceBtn.addEventListener("click", () => changeMode("practice"));
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    _injectModeSwitcher();
+
+    // 0. Clean and normalize question answers for chemistry and maths quizzes (index to string text)
+    if (typeof questions !== "undefined" && Array.isArray(questions)) {
+      questions.forEach(q => {
+        if (typeof q.answer === "number" && Array.isArray(q.options)) {
+          q.answer = q.options[q.answer];
+        }
+      });
+    }
+
+    // Intercept selectOption and loadQuestion
+    const origSelectOption = window.selectOption;
+    const origLoadQuestion = window.loadQuestion;
+
+    if (typeof window.selectOption === "function" && typeof window.loadQuestion === "function") {
+      window.loadQuestion = function() {
+        origLoadQuestion.apply(this, arguments);
+
+        // Hide and clear practice feedback
+        const feedbackDiv = document.getElementById("practice-feedback");
+        if (feedbackDiv) {
+          feedbackDiv.className = "practice-feedback hidden";
+          feedbackDiv.innerHTML = "";
+        }
+      };
+
+      window.selectOption = function(button, option) {
+        if (window.quizProgress.mode !== "practice") {
+          return origSelectOption.apply(this, arguments);
+        }
+
+        // Resolve question references dynamically for either adaptive (motion, nlm) or standard quizzes
+        let q, qIndex, ansArray;
+        if (typeof adaptiveSteps !== "undefined" && typeof currentStepIndex !== "undefined") {
+          q = adaptiveSteps[currentStepIndex];
+          qIndex = currentStepIndex;
+          ansArray = userSelectionsByStep;
+        } else {
+          q = questions[currentQuestionIndex];
+          qIndex = currentQuestionIndex;
+          ansArray = userAnswers;
+        }
+
+        // Practice mode logic:
+        // 1. Identify if it is correct or incorrect
+        const correctText = typeof q.answer === 'number' && Array.isArray(q.options)
+            ? q.options[q.answer]
+            : q.answer;
+        const isCorrect = (option === correctText);
+
+        // 2. Disable all option buttons and style correct/wrong choices
+        const buttons = document.querySelectorAll(".option");
+        buttons.forEach(btn => {
+          btn.disabled = true;
+          if (btn.textContent === correctText) {
+            btn.style.setProperty('background-color', '#10b981', 'important');
+            btn.style.setProperty('color', '#ffffff', 'important');
+          } else if (btn === button && !isCorrect) {
+            btn.style.setProperty('background-color', '#ef4444', 'important');
+            btn.style.setProperty('color', '#ffffff', 'important');
+          } else {
+            btn.style.opacity = "0.5";
+          }
+        });
+
+        // 3. Mark selectedOption, userAnswers, and enable next/submit buttons
+        selectedOption = option;
+        ansArray[qIndex] = option;
+
+        const nextBtn = document.getElementById("next-btn");
+        if (nextBtn) nextBtn.disabled = false;
+        const submitBtn = document.getElementById("submit-btn");
+        if (submitBtn) submitBtn.disabled = false;
+
+        // 4. Display feedback element
+        let feedbackDiv = document.getElementById("practice-feedback");
+        if (!feedbackDiv) {
+          feedbackDiv = document.createElement("div");
+          feedbackDiv.id = "practice-feedback";
+          const optContainer = document.getElementById("options");
+          if (optContainer) {
+            optContainer.parentNode.insertBefore(feedbackDiv, optContainer.nextSibling);
+          }
+        }
+
+        feedbackDiv.className = `practice-feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        let feedbackHTML = isCorrect
+          ? `<strong>✅ Correct!</strong>`
+          : `<strong>❌ Incorrect!</strong> The correct answer is: <strong>${correctText}</strong>`;
+        
+        if (q.explanation) {
+          feedbackHTML += `<div style="margin-top: 8px; font-size: 0.9rem; opacity: 0.95;">${q.explanation}</div>`;
+        }
+        feedbackDiv.innerHTML = feedbackHTML;
+
+        // 5. If incorrect, log mistake for later review
+        if (!isCorrect) {
+          const topicId = q.topicId || (typeof getTopicIdFromUrl === "function" ? getTopicIdFromUrl() : null);
+          window.quizProgress.logMistake(topicId, q);
+        }
+      };
     }
   });
 }

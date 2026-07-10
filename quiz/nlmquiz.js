@@ -1,12 +1,76 @@
 const questions = [
-    { difficulty: "easy", question: "What does Newton's First Law state?", options: ["F = ma", "Action = Reaction", "Objects stay in motion/rest unless acted on", "Momentum is conserved"], answer: "Objects stay in motion/rest unless acted on" },
-    { difficulty: "easy", question: "Which force is required to change the state of motion of an object?", options: ["Friction", "Gravity", "Applied Force", "Centripetal Force"], answer: "Applied Force" },
-    { difficulty: "medium", question: "Newton's Second Law states that force is equal to:", options: ["mass × acceleration", "mass × velocity", "momentum × time", "velocity × time"], answer: "mass × acceleration" },
-    { difficulty: "medium", question: "What happens when two equal and opposite forces act on an object?", options: ["The object moves in the direction of the larger force", "The object accelerates", "The object remains in equilibrium", "The object gains momentum"], answer: "The object remains in equilibrium" },
-    { difficulty: "medium", question: "According to Newton’s Third Law, what happens when you push on a wall?", options: ["The wall moves", "The wall exerts an equal force back on you", "No force is applied back", "Only you experience the force"], answer: "The wall exerts an equal force back on you" },
-    { difficulty: "medium", question: "What is inertia?", options: ["The tendency of an object to resist a change in motion", "The force applied by a moving object", "The acceleration of an object due to gravity", "The energy stored in a moving object"], answer: "The tendency of an object to resist a change in motion" },
-    { difficulty: "hard", question: "If an object's mass increases, what happens to the force required to accelerate it?", options: ["Increases", "Decreases", "Remains the same", "Depends on velocity"], answer: "Increases" },
-    { difficulty: "hard", question: "Which of the following is an example of Newton’s Third Law?", options: ["A car accelerating when force is applied", "A book resting on a table", "A rocket launching by expelling gases", "An object staying at rest"], answer: "A rocket launching by expelling gases" }
+    {
+        difficulty: "easy",
+        topicId: "physics-nlm",
+        skillId: "nlm-first-law",
+        skillLabel: "Newton's First Law & Inertia",
+        question: "What does Newton's First Law state?",
+        options: ["F = ma", "Action = Reaction", "Objects stay in motion/rest unless acted on", "Momentum is conserved"],
+        answer: "Objects stay in motion/rest unless acted on"
+    },
+    {
+        difficulty: "easy",
+        topicId: "physics-nlm",
+        skillId: "nlm-forces",
+        skillLabel: "Force & Equilibrium",
+        question: "Which force is required to change the state of motion of an object?",
+        options: ["Friction", "Gravity", "Applied Force", "Centripetal Force"],
+        answer: "Applied Force"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-nlm",
+        skillId: "nlm-second-law",
+        skillLabel: "Newton's Second Law (F=ma)",
+        question: "Newton's Second Law states that force is equal to:",
+        options: ["mass × acceleration", "mass × velocity", "momentum × time", "velocity × time"],
+        answer: "mass × acceleration"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-nlm",
+        skillId: "nlm-forces",
+        skillLabel: "Force & Equilibrium",
+        question: "What happens when two equal and opposite forces act on an object?",
+        options: ["The object moves in the direction of the larger force", "The object accelerates", "The object remains in equilibrium", "The object gains momentum"],
+        answer: "The object remains in equilibrium"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-nlm",
+        skillId: "nlm-third-law",
+        skillLabel: "Newton's Third Law (Action/Reaction)",
+        question: "According to Newton’s Third Law, what happens when you push on a wall?",
+        options: ["The wall moves", "The wall exerts an equal force back on you", "No force is applied back", "Only you experience the force"],
+        answer: "The wall exerts an equal force back on you"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-nlm",
+        skillId: "nlm-first-law",
+        skillLabel: "Newton's First Law & Inertia",
+        question: "What is inertia?",
+        options: ["The tendency of an object to resist a change in motion", "The force applied by a moving object", "The acceleration of an object due to gravity", "The energy stored in a moving object"],
+        answer: "The tendency of an object to resist a change in motion"
+    },
+    {
+        difficulty: "hard",
+        topicId: "physics-nlm",
+        skillId: "nlm-second-law",
+        skillLabel: "Newton's Second Law (F=ma)",
+        question: "If an object's mass increases, what happens to the force required to accelerate it?",
+        options: ["Increases", "Decreases", "Remains the same", "Depends on velocity"],
+        answer: "Increases"
+    },
+    {
+        difficulty: "hard",
+        topicId: "physics-nlm",
+        skillId: "nlm-third-law",
+        skillLabel: "Newton's Third Law (Action/Reaction)",
+        question: "Which of the following is an example of Newton’s Third Law?",
+        options: ["A car accelerating when force is applied", "A book resting on a table", "A rocket launching by expelling gases", "An object staying at rest"],
+        answer: "A rocket launching by expelling gases"
+    }
 ];
 
 let adaptiveQuiz = null;

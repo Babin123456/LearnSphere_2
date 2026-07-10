@@ -1,9 +1,49 @@
 const questions = [
-    { difficulty: "easy", question: "What is the SI unit of speed?", options: ["m/s", "km/h", "m/s²", "N"], answer: "m/s" },
-    { difficulty: "easy", question: "What causes an object to accelerate?", options: ["Mass", "Force", "Friction", "Temperature"], answer: "Force" },
-    { difficulty: "medium", question: "Which of these is a scalar quantity?", options: ["Velocity", "Acceleration", "Displacement", "Speed"], answer: "Speed" },
-    { difficulty: "medium", question: "What does Newton's First Law state?", options: ["F = ma", "Action = Reaction", "Objects stay in motion/rest unless acted on", "Momentum is conserved"], answer: "Objects stay in motion/rest unless acted on" },
-    { difficulty: "hard", question: "What is the formula for acceleration?", options: ["v/t", "d/t", "Δv/t", "F/m"], answer: "Δv/t" }
+    {
+        difficulty: "easy",
+        topicId: "physics-motion",
+        skillId: "motion-basics",
+        skillLabel: "Speed & Velocity Basics",
+        question: "What is the SI unit of speed?",
+        options: ["m/s", "km/h", "m/s²", "N"],
+        answer: "m/s"
+    },
+    {
+        difficulty: "easy",
+        topicId: "physics-motion",
+        skillId: "motion-forces",
+        skillLabel: "Acceleration & Forces",
+        question: "What causes an object to accelerate?",
+        options: ["Mass", "Force", "Friction", "Temperature"],
+        answer: "Force"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-motion",
+        skillId: "motion-scalars",
+        skillLabel: "Scalars & Vectors",
+        question: "Which of these is a scalar quantity?",
+        options: ["Velocity", "Acceleration", "Displacement", "Speed"],
+        answer: "Speed"
+    },
+    {
+        difficulty: "medium",
+        topicId: "physics-nlm",
+        skillId: "nlm-first-law",
+        skillLabel: "Newton's First Law & Inertia",
+        question: "What does Newton's First Law state?",
+        options: ["F = ma", "Action = Reaction", "Objects stay in motion/rest unless acted on", "Momentum is conserved"],
+        answer: "Objects stay in motion/rest unless acted on"
+    },
+    {
+        difficulty: "hard",
+        topicId: "physics-motion",
+        skillId: "motion-equations",
+        skillLabel: "Equations of Motion",
+        question: "What is the formula for acceleration?",
+        options: ["v/t", "d/t", "Δv/t", "F/m"],
+        answer: "Δv/t"
+    }
 ];
 
 let adaptiveQuiz = null;

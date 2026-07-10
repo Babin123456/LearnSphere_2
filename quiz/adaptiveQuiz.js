@@ -41,11 +41,48 @@
     // Shuffle or sort each bucket based on mode.
     Object.keys(buckets).forEach(k => {
       const arr = buckets[k];
-      if (window.isWeaknessFocusMode && window.quizProgress && typeof window.quizProgress.getQuestionWeaknessWeight === 'function') {
+      if (window.isWeaknessFocusMode && window.quizProgress) {
+        // Prioritize weakest questions.
+        // If per-question topic metadata exists, further bias toward weak topics.
+        const getQWeak = typeof window.quizProgress.getQuestionWeaknessWeight === 'function'
+          ? window.quizProgress.getQuestionWeaknessWeight.bind(window.quizProgress)
+          : null;
+
+        const getTopicStats = typeof window.quizProgress.getTopicStats === 'function'
+          ? window.quizProgress.getTopicStats.bind(window.quizProgress)
+          : null;
+
         arr.sort((a, b) => {
-          const weightA = window.quizProgress.getQuestionWeaknessWeight(a);
-          const weightB = window.quizProgress.getQuestionWeaknessWeight(b);
-          return weightB - weightA; // weakest first
+          const wA = getQWeak ? getQWeak(a) : 0.5;
+          const wB = getQWeak ? getQWeak(b) : 0.5;
+
+          // Topic weakness bonus (only if we have topicId on question objects)
+          let topicBonusA = 0;
+          if (a && a.topicId && getTopicStats) {
+            const st = getTopicStats(a.topicId);
+            if (st && st.questionsTotal > 0) {
+              const acc = st.correctTotal / st.questionsTotal;
+              topicBonusA = 1 - acc;
+            } else {
+              topicBonusA = 0.6; // unseen topic treated as weak
+            }
+          }
+
+          let topicBonusB = 0;
+          if (b && b.topicId && getTopicStats) {
+            const st = getTopicStats(b.topicId);
+            if (st && st.questionsTotal > 0) {
+              const acc = st.correctTotal / st.questionsTotal;
+              topicBonusB = 1 - acc;
+            } else {
+              topicBonusB = 0.6;
+            }
+          }
+
+          // Combine: question weakness dominates, topic bias breaks ties.
+          const combinedA = wA + topicBonusA * 0.35;
+          const combinedB = wB + topicBonusB * 0.35;
+          return combinedB - combinedA;
         });
       } else {
         // Shuffle each bucket for variety.
