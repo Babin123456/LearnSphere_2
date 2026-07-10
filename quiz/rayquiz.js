@@ -1,9 +1,44 @@
 const questions = [
-    { question: "What is the law of reflection?", options: ["Angle of incidence = Angle of reflection", "Light bends towards the normal", "Light travels in a straight line", "Total internal reflection occurs"], answer: "Angle of incidence = Angle of reflection" },
-    { question: "Which mirror always forms a virtual, upright, and diminished image?", options: ["Concave mirror", "Convex mirror", "Plane mirror", "Parabolic mirror"], answer: "Convex mirror" },
-    { question: "What is the focal length of a plane mirror?", options: ["Infinity", "Zero", "Equal to the radius of curvature", "Equal to half of the radius of curvature"], answer: "Infinity" },
-    { question: "What happens when light travels from a denser to a rarer medium at an angle greater than the critical angle?", options: ["Reflection", "Refraction", "Total internal reflection", "Diffraction"], answer: "Total internal reflection" },
-    { question: "Which lens is used to correct myopia (nearsightedness)?", options: ["Convex lens", "Concave lens", "Cylindrical lens", "Bifocal lens"], answer: "Concave lens" }
+    {
+        topicId: "physics-ray",
+        skillId: "ray-reflection",
+        skillLabel: "Reflection Laws",
+        question: "What is the law of reflection?",
+        options: ["Angle of incidence = Angle of reflection", "Light bends towards the normal", "Light travels in a straight line", "Total internal reflection occurs"],
+        answer: "Angle of incidence = Angle of reflection"
+    },
+    {
+        topicId: "physics-ray",
+        skillId: "ray-mirrors",
+        skillLabel: "Spherical Mirrors",
+        question: "Which mirror always forms a virtual, upright, and diminished image?",
+        options: ["Concave mirror", "Convex mirror", "Plane mirror", "Parabolic mirror"],
+        answer: "Convex mirror"
+    },
+    {
+        topicId: "physics-ray",
+        skillId: "ray-mirrors",
+        skillLabel: "Spherical Mirrors",
+        question: "What is the focal length of a plane mirror?",
+        options: ["Infinity", "Zero", "Equal to the radius of curvature", "Equal to half of the radius of curvature"],
+        answer: "Infinity"
+    },
+    {
+        topicId: "physics-ray",
+        skillId: "ray-tir",
+        skillLabel: "Total Internal Reflection",
+        question: "What happens when light travels from a denser to a rarer medium at an angle greater than the critical angle?",
+        options: ["Reflection", "Refraction", "Total internal reflection", "Diffraction"],
+        answer: "Total internal reflection"
+    },
+    {
+        topicId: "physics-ray",
+        skillId: "ray-lenses",
+        skillLabel: "Lenses & Vision Correction",
+        question: "Which lens is used to correct myopia (nearsightedness)?",
+        options: ["Convex lens", "Concave lens", "Cylindrical lens", "Bifocal lens"],
+        answer: "Concave lens"
+    }
 ];
 
 let currentQuestionIndex = 0;

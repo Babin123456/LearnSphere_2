@@ -233,7 +233,7 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
       const ans = resolvedAnswers[idx];
       if (ans !== undefined && ans !== null) {
         hasAnswers = true;
-        // Determine correct option (which might be index number or string)
+      // Determine correct option (which might be index number or string)
         const correctOption = typeof q.answer === 'number' && Array.isArray(q.options) ? q.options[q.answer] : q.answer;
         const isCorrect = ans === correctOption;
 
@@ -241,43 +241,47 @@ function recordAttempt({ topicId, score, totalQuestions, correctCount, timeTaken
           calculatedCorrect++;
         }
 
-        // Find skill from taxonomy mapping
+        // Resolve skill/topic using per-question metadata when available.
+        // Falls back to SKILL_TAXONOMY via question text (legacy quizzes).
+        const metaSkillId = q.skillId || null;
+        const metaTopicId = q.topicId || null;
+
         const qText = q.question ? q.question.trim() : "";
-        const taxonomyMatch = SKILL_TAXONOMY[qText];
-        if (taxonomyMatch) {
-          const sId = taxonomyMatch.skillId;
-          if (!state.mastery[sId]) {
-            state.mastery[sId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
-          }
-          state.mastery[sId].attempts += 1;
+        const taxonomyMatch = metaSkillId ? null : SKILL_TAXONOMY[qText];
+
+        const resolvedTopicId = metaTopicId || topicId;
+        const resolvedSkillId =
+          metaSkillId ||
+          taxonomyMatch?.skillId ||
+          (resolvedTopicId ? resolvedTopicId + "-general" : topicId + "-general");
+
+        if (!state.mastery[resolvedSkillId]) {
+          state.mastery[resolvedSkillId] = {
+            attempts: 0,
+            correct: 0,
+            lastAttemptAt: 0,
+            weaknessAttempts: 0,
+            weaknessCorrect: 0,
+          };
+        }
+
+        state.mastery[resolvedSkillId].attempts += 1;
+        if (isCorrect) {
+          state.mastery[resolvedSkillId].correct += 1;
+        }
+        state.mastery[resolvedSkillId].lastAttemptAt = now;
+
+        if (window.isWeaknessFocusMode) {
+          state.mastery[resolvedSkillId].weaknessAttempts = (state.mastery[resolvedSkillId].weaknessAttempts || 0) + 1;
           if (isCorrect) {
-            state.mastery[sId].correct += 1;
-          }
-          state.mastery[sId].lastAttemptAt = now;
-          if (window.isWeaknessFocusMode) {
-            state.mastery[sId].weaknessAttempts = (state.mastery[sId].weaknessAttempts || 0) + 1;
-            if (isCorrect) {
-              state.mastery[sId].weaknessCorrect = (state.mastery[sId].weaknessCorrect || 0) + 1;
-            }
-          }
-        } else {
-          // Fallback to topic-general skill if not mapped explicitly
-          const fallbackSkillId = topicId + "-general";
-          if (!state.mastery[fallbackSkillId]) {
-            state.mastery[fallbackSkillId] = { attempts: 0, correct: 0, lastAttemptAt: 0, weaknessAttempts: 0, weaknessCorrect: 0 };
-          }
-          state.mastery[fallbackSkillId].attempts += 1;
-          if (isCorrect) {
-            state.mastery[fallbackSkillId].correct += 1;
-          }
-          state.mastery[fallbackSkillId].lastAttemptAt = now;
-          if (window.isWeaknessFocusMode) {
-            state.mastery[fallbackSkillId].weaknessAttempts = (state.mastery[fallbackSkillId].weaknessAttempts || 0) + 1;
-            if (isCorrect) {
-              state.mastery[fallbackSkillId].weaknessCorrect = (state.mastery[fallbackSkillId].weaknessCorrect || 0) + 1;
-            }
+            state.mastery[resolvedSkillId].weaknessCorrect = (state.mastery[resolvedSkillId].weaknessCorrect || 0) + 1;
           }
         }
+
+        // Topic aggregates are updated below at attempt-level (state.byTopic[topicId])
+        // for backward compatibility. Per-question metadata primarily powers mastery +
+        // weakness scoring.
+        void resolvedTopicId;
       }
     });
   }

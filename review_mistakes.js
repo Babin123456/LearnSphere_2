@@ -134,6 +134,68 @@
     });
   }
 
+  function renderWeakTopicsSection() {
+    const container = document.getElementById("rm-weak-topics");
+    if (!container) return;
+
+    if (!window.quizProgress || typeof window.quizProgress.getRecommendedTopics !== "function") {
+      container.innerHTML = "";
+      return;
+    }
+
+    const recs = window.quizProgress.getRecommendedTopics({ limit: 5 }) || [];
+
+    container.innerHTML = "";
+
+    if (!recs.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">✅</span>
+          No weak topics identified yet.
+        </div>
+      `;
+      return;
+    }
+
+    const sorted = recs.slice().sort((a,b) => (b.weakness||0) - (a.weakness||0));
+
+    sorted.forEach((item) => {
+      const topic = item.topic;
+      const label = topic?.label || topic?.id || "—";
+      const accuracy = typeof item.accuracy === "number" ? item.accuracy : null;
+      const attempts = item.attempts || 0;
+      const pct = accuracy === null ? null : Math.round(accuracy * 100);
+
+      const topicCard = document.createElement("div");
+      topicCard.className = "review-mistake-item";
+      topicCard.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="font-weight:800; color: var(--text-color);">📌 ${label}</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">
+            ${pct === null ? "No attempts yet" : `Accuracy: <strong>${pct}%</strong>`}
+            <span style="margin: 0 8px;">•</span>
+            Attempts: <strong>${attempts}</strong>
+          </div>
+          <div>
+            <button class="action-btn primary rm-start-practice" type="button" data-topic-id="${topic?.id || ""}">
+              Start practice: ${label}
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(topicCard);
+    });
+
+    container.querySelectorAll(".rm-start-practice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tid = btn.getAttribute("data-topic-id");
+        if (!tid) return;
+        // Keep UX consistent with this page: topic is driven by query param.
+        window.location.href = `review_mistakes.html?topic=${encodeURIComponent(tid)}`;
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     const topicId = getTopicIdFromQuery();
 
@@ -141,6 +203,7 @@
 
     renderList({ topicId, missedQids });
     initRetryMode({ topicId });
+    renderWeakTopicsSection();
 
     const retryBtn = document.getElementById("rm-retryBtn");
     if (retryBtn && missedQids.length > 0) retryBtn.disabled = false;
@@ -150,6 +213,7 @@
       const latestMissed = getMissedQids(topicId);
       renderList({ topicId, missedQids: latestMissed });
       initRetryMode({ topicId });
+      renderWeakTopicsSection();
     });
   });
 
