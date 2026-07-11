@@ -125,6 +125,57 @@
         <button class="drilldown-btn" data-metric="improvement" style="margin-top:8px;background:none;border:none;color:#66fcf1;cursor:pointer;">🔎 Drill‑down</button>
     </div>
 
+    <!-- ══════════════ CLASS MASTERY HEATMAP ══════════════ -->
+    <div class="card heatmap-card" style="background:#0f1115;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2);margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2 style="margin:0;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1.3rem;">🗺️</span> Class Mastery Heatmap
+          </h2>
+          <p style="margin:4px 0 0;font-size:12px;color:rgba(255,255,255,0.6);">Topics vs Students — identify class-wide gaps at a glance.</p>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.04);padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);">Data from localStorage (demo)</div>
+      </div>
+
+      <!-- Heatmap filters -->
+      <div class="heatmap-filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:16px;padding:12px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+          <label for="heatmapSubjectFilter" style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:600;">Subject</label>
+          <select id="heatmapSubjectFilter" aria-label="Subject filter" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#0f1115;color:#fff;outline:none;font-size:13px;">
+            <option value="all" selected>All subjects</option>
+            <option value="physics">Physics</option>
+            <option value="maths">Maths</option>
+            <option value="chemistry">Chemistry</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+          <label for="heatmapFromDate" style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:600;">Start date</label>
+          <input type="date" id="heatmapFromDate" aria-label="Heatmap start date" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;outline:none;font-size:13px;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+          <label for="heatmapToDate" style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:600;">End date</label>
+          <input type="date" id="heatmapToDate" aria-label="Heatmap end date" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff;outline:none;font-size:13px;" />
+        </div>
+        <button type="button" id="heatmapApplyBtn" style="background:rgba(102,252,241,0.16);border:1px solid rgba(102,252,241,0.35);color:#66fcf1;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;min-height:38px;">
+          Apply
+        </button>
+      </div>
+
+      <!-- Heatmap canvas (scrollable) -->
+      <div style="overflow-x:auto;margin-top:16px;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;background:rgba(0,0,0,0.15);">
+        <canvas id="heatmapCanvas" aria-label="Class mastery heatmap" role="img"></canvas>
+      </div>
+
+      <!-- Topic Gap Analysis -->
+      <div style="margin-top:16px;">
+        <h3 style="margin:0 0 10px;font-size:0.95rem;color:rgba(255,255,255,0.85);display:flex;align-items:center;gap:6px;">
+          <span>📊</span> Topic Gap Analysis
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:400;margin-left:auto;">Sorted weakest → strongest</span>
+        </h3>
+        <div id="heatmapGapList" class="heatmap-gap-list"></div>
+      </div>
+    </div>
+
   </section>
   </main>
 
@@ -145,6 +196,7 @@
     </div>
   </div>
   <script src="chart-utils.js"></script>
+  <script src="classHeatmap.js"></script>
   <script src="metricExplain.js"></script>
 </body>
 </html>
