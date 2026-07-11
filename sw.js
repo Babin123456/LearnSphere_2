@@ -329,17 +329,67 @@ self.addEventListener("message", (event) => {
       })
     );
   }
+
+  // Handle online event forwarded from clients — register background sync
+  if (event.data && event.data.action === "register-sync") {
+    event.waitUntil(
+      (async () => {
+        // Notify all clients that a sync cycle is starting
+        const clientsList = await self.clients.matchAll();
+        clientsList.forEach((client) => {
+          client.postMessage({ action: "sync-status", status: "syncing" });
+        });
+
+        // Register background sync if available
+        if ("SyncManager" in self) {
+          try {
+            await self.registration.sync.register("learnsphere-sync-progress");
+          } catch (err) {
+            console.warn("LearnSphere: SW Background Sync registration failed:", err);
+            // Fallback: tell clients to flush directly
+            clientsList.forEach((client) => {
+              client.postMessage({ action: "do-flush-offline-queue" });
+            });
+          }
+        } else {
+          // No SyncManager — tell clients to flush directly
+          clientsList.forEach((client) => {
+            client.postMessage({ action: "do-flush-offline-queue" });
+          });
+        }
+      })()
+    );
+  }
+
+  // Handle queue status check requests
+  if (event.data && event.data.action === "check-queue-status") {
+    event.waitUntil(
+      self.clients.matchAll().then((clientsList) => {
+        clientsList.forEach((client) => {
+          client.postMessage({ action: "request-queue-status" });
+        });
+      })
+    );
+  }
 });
 
 // Background Sync: flush offline queue when connectivity returns
 self.addEventListener("sync", (event) => {
   if (event.tag === "learnsphere-sync-progress") {
     event.waitUntil(
-      self.clients.matchAll().then((clientsList) => {
+      (async () => {
+        const clientsList = await self.clients.matchAll();
+
+        // Notify clients that sync is in progress
+        clientsList.forEach((client) => {
+          client.postMessage({ action: "sync-status", status: "syncing" });
+        });
+
+        // Tell clients to perform the actual flush
         clientsList.forEach((client) => {
           client.postMessage({ action: "do-flush-offline-queue" });
         });
-      })
+      })()
     );
   }
 });
