@@ -464,6 +464,18 @@
     </div>
 
 
+    <!-- ── Notification Center Card ── -->
+    <div class="card" style="margin-top:16px" id="notificationCenterCard">
+      <h2 style="margin-top:0; display:flex; align-items:center; gap:10px;">
+        🔔 Notification Center
+        <span id="nc-unread-badge" style="display:none; background:#ff4500; color:#fff; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:900;"></span>
+      </h2>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">
+        All your notifications in one place — filter by category, mark read, or clear.
+      </p>
+      <div id="notifCenterContainer"></div>
+    </div>
+
     <div class="card" style="margin-top:16px">
       <h2 style="margin-top:0">🗓️ Review queue</h2>
       <div id="reviewQueueWidget" class="muted" style="font-size:14px; margin-top:6px;">Loading…</div>
@@ -493,6 +505,27 @@
       (function () {
         if (!('serviceWorker' in navigator)) return;
         window.addEventListener('load', function () {
+          if (window.achievements?.renderStreakTimeline) {
+            window.achievements.renderStreakTimeline("streakTimelineContainer");
+          }
+
+          // Notification Center inline card
+          if (window.notifications?.renderNotificationCenter) {
+            window.notifications.renderNotificationCenter("notifCenterContainer");
+          }
+
+          // Update inline unread badge in the NC card header
+          (function updateNCBadge() {
+            const badge = document.getElementById("nc-unread-badge");
+            if (!badge) return;
+            const unread = window.notifications?.getUnread?.() || [];
+            if (unread.length > 0) {
+              badge.textContent = `${unread.length} unread`;
+              badge.style.display = "inline";
+            } else {
+              badge.style.display = "none";
+            }
+          })();
           navigator.serviceWorker.register('/sw.js').catch(function (err) {
             console.warn('LearnSphere: Service Worker registration failed:', err);
           });
