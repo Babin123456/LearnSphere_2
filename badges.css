@@ -1,2 +1,350 @@
-/* Optional future shared badge styling; current implementation uses inline styles in badges.js */
+/*
+ * badges.css — Streaks, Milestones, Badge Timeline Styles
+ *
+ * Covers:
+ *  - .streak-kpi-row        — KPI chips row (current/longest streak, total quizzes)
+ *  - .streak-calendar       — 30-day activity grid heatmap
+ *  - .milestone-track-wrap  — horizontal milestone progress bar + nodes
+ *  - .milestone-node        — individual milestone icon node
+ *  - .milestone-label       — text label below node
+ */
 
+/* ──────────────────────────────────────────────
+   KPI Row
+   ────────────────────────────────────────────── */
+.streak-kpi-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.streak-kpi-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(102, 252, 241, 0.06);
+  border: 1px solid rgba(102, 252, 241, 0.22);
+  border-radius: 14px;
+  padding: 14px 18px;
+  min-width: 150px;
+  flex: 1;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.streak-kpi-chip:hover {
+  background: rgba(102, 252, 241, 0.1);
+  border-color: rgba(102, 252, 241, 0.45);
+  transform: translateY(-2px);
+}
+
+.streak-kpi-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.streak-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.streak-kpi-unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.streak-kpi-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+/* ──────────────────────────────────────────────
+   Section Titles
+   ────────────────────────────────────────────── */
+.streak-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 12px;
+}
+
+/* ──────────────────────────────────────────────
+   Calendar Legend
+   ────────────────────────────────────────────── */
+.streak-calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.legend-active   { background: #66fcf1; box-shadow: 0 0 6px rgba(102,252,241,0.6); }
+.legend-inactive { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); }
+.legend-today    { background: rgba(102,252,241,0.25); border: 1.5px solid #66fcf1; }
+
+/* ──────────────────────────────────────────────
+   Day-of-week Header
+   ────────────────────────────────────────────── */
+.streak-day-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.streak-day-letter {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ──────────────────────────────────────────────
+   30-Day Activity Calendar
+   ────────────────────────────────────────────── */
+.streak-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.streak-day-box {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  cursor: default;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.streak-day-box:hover {
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+.streak-day-empty {
+  background: transparent;
+}
+
+.streak-day-inactive {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: transparent;
+}
+
+.streak-day-active {
+  background: linear-gradient(135deg, #66fcf1, #45a29e);
+  border: none;
+  color: #0f1115;
+  box-shadow: 0 0 8px rgba(102, 252, 241, 0.45);
+  animation: dayPulse 2.5s ease infinite;
+}
+
+.streak-day-today {
+  background: rgba(102, 252, 241, 0.18);
+  border: 1.5px solid #66fcf1;
+  color: #66fcf1;
+  box-shadow: 0 0 10px rgba(102, 252, 241, 0.35);
+}
+
+@keyframes dayPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(102, 252, 241, 0.4); }
+  50%       { box-shadow: 0 0 14px rgba(102, 252, 241, 0.7); }
+}
+
+/* ──────────────────────────────────────────────
+   Milestone Track
+   ────────────────────────────────────────────── */
+.milestone-track-wrap {
+  position: relative;
+  padding: 0 0 48px 0;   /* bottom padding for labels */
+  margin-bottom: 8px;
+}
+
+.milestone-track-bar {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: visible;
+  margin-top: 30px;      /* top padding for node icons */
+}
+
+.milestone-track-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #66fcf1, #45a29e);
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(102, 252, 241, 0.4);
+}
+
+.milestone-track-nodes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ──────────────────────────────────────────────
+   Milestone Nodes
+   ────────────────────────────────────────────── */
+.milestone-node {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: all;
+  cursor: default;
+}
+
+.milestone-node-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.milestone-node:hover .milestone-node-icon {
+  transform: scale(1.2);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+
+.milestone-node-label {
+  margin-top: 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.milestone-node-check {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #66fcf1;
+  color: #0f1115;
+  font-size: 8px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* Unlocked state */
+.milestone-node--unlocked .milestone-node-icon {
+  background: rgba(102, 252, 241, 0.15);
+  border-color: #66fcf1;
+  box-shadow: 0 0 12px rgba(102, 252, 241, 0.5);
+  animation: nodeGlow 2s ease infinite;
+}
+
+.milestone-node--unlocked .milestone-node-label {
+  color: #66fcf1;
+  font-weight: 800;
+}
+
+@keyframes nodeGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(102, 252, 241, 0.4); }
+  50%       { box-shadow: 0 0 20px rgba(102, 252, 241, 0.75); }
+}
+
+/* ──────────────────────────────────────────────
+   Milestone Labels (below bar)
+   ────────────────────────────────────────────── */
+.milestone-track-labels {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  pointer-events: none;
+}
+
+.milestone-label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.38);
+  white-space: nowrap;
+  text-align: center;
+  top: 0;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.milestone-label--unlocked {
+  color: rgba(102, 252, 241, 0.85);
+  font-weight: 700;
+}
+
+/* ──────────────────────────────────────────────
+   Badge Cards (from badges.js inline — shared override)
+   ────────────────────────────────────────────── */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@media (max-width: 560px) {
+  .badges-grid { grid-template-columns: 1fr; }
+  .streak-kpi-row { flex-direction: column; }
+  .streak-calendar { gap: 4px; }
+  .milestone-node-icon { width: 26px; height: 26px; font-size: 12px; }
+  .milestone-label { font-size: 0.55rem; }
+}
+
+@media (max-width: 360px) {
+  .streak-day-box { border-radius: 3px; }
+}

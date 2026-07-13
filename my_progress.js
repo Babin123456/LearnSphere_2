@@ -932,6 +932,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.achievements?.renderBadges) {
     window.achievements.renderBadges("badgesContainerMyProgress");
   }
+
+  if (window.achievements?.renderStreakTimeline) {
+    window.achievements.renderStreakTimeline("streakTimelineContainer");
+  }
 });
 
 
