@@ -187,3 +187,24 @@ button:hover:enabled {
 .hidden {
     display: none;
 }
+
+/* ─── Keyboard Focus Styles ─────────────────────────────────────────────── */
+:focus-visible {
+    outline: 3px solid #00ffcc;
+    outline-offset: 3px;
+}
+
+.option:focus-visible {
+    outline: 3px solid #00ffcc;
+    outline-offset: 3px;
+}
+
+button:focus-visible {
+    outline: 3px solid #00ffcc;
+    outline-offset: 3px;
+}
+
+.popup:focus-visible {
+    outline: 3px solid #00ffcc;
+    outline-offset: 3px;
+}

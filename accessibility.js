@@ -27,6 +27,12 @@
           setActiveOption(event.target, optionsContainer, false);
         }
       });
+
+      // Automatically refresh option tab stops when options are dynamically populated/re-rendered.
+      const observer = new MutationObserver(() => {
+        refreshOptionTabStops(optionsContainer);
+      });
+      observer.observe(optionsContainer, { childList: true });
     }
 
     return { container, optionsContainer, srStatus };
@@ -408,5 +414,7 @@
   // Expose API globally.
   window.initQuizAccessibility = initQuizAccessibility;
   window.srAnnounce = announce;
+  window.openDialog = openDialog;
+  window.closeDialog = closeDialog;
 })();
 

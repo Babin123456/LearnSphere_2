@@ -247,12 +247,15 @@ function prevQuestion() {
 
 
 function confirmSubmit() {
-    lastFocusedEl = document.activeElement;
-    document.getElementById("confirm-popup").style.display = "block";
-
-    // Move focus to primary action
-    const yesBtn = document.getElementById("confirm-yes");
-    if (yesBtn) yesBtn.focus();
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.openDialog) {
+        window.openDialog(confirmPopup, { initialFocusId: "confirm-yes" });
+    } else {
+        lastFocusedEl = document.activeElement;
+        confirmPopup.style.display = "block";
+        const yesBtn = document.getElementById("confirm-yes");
+        if (yesBtn) yesBtn.focus();
+    }
 }
 
 function submitQuiz() {
@@ -261,12 +264,18 @@ function submitQuiz() {
         return;
     }
 
-    const isCorrect = selectedOption === questions[currentQuestionIndex].answer;
+    const q = currentQuestion();
+    const isCorrect = selectedOption === q.answer;
     if (isCorrect) score++;
 
     announce(isCorrect ? "Correct answer." : "Incorrect answer.");
 
-    document.getElementById("confirm-popup").style.display = "none";
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.closeDialog) {
+        window.closeDialog(confirmPopup);
+    } else {
+        confirmPopup.style.display = "none";
+    }
     showResults();
 }
 
@@ -294,21 +303,35 @@ function restartQuiz() {
 
 
 function showPopup() {
-    lastFocusedEl = document.activeElement;
-    document.getElementById("popup").style.display = "block";
-
-    const okBtn = document.getElementById("popup-ok");
-    if (okBtn) okBtn.focus();
+    const popup = document.getElementById("popup");
+    if (window.openDialog) {
+        window.openDialog(popup, { initialFocusId: "popup-ok" });
+    } else {
+        lastFocusedEl = document.activeElement;
+        popup.style.display = "block";
+        const okBtn = document.getElementById("popup-ok");
+        if (okBtn) okBtn.focus();
+    }
 }
 
 function closePopup() {
-    document.getElementById("popup").style.display = "none";
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    const popup = document.getElementById("popup");
+    if (window.closeDialog) {
+        window.closeDialog(popup);
+    } else {
+        popup.style.display = "none";
+        if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    }
 }
 
 function closeConfirmPopup() {
-    document.getElementById("confirm-popup").style.display = "none";
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.closeDialog) {
+        window.closeDialog(confirmPopup);
+    } else {
+        confirmPopup.style.display = "none";
+        if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    }
 }
 
 function showResults() {

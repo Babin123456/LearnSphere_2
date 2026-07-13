@@ -68,6 +68,7 @@ function loadQuestion() {
     let optionsContainer = document.getElementById("options");
     optionsContainer.innerHTML = "";
 
+    let fragment = document.createDocumentFragment();
     questionData.options.forEach((option) => {
         let btn = document.createElement("button");
         btn.classList.add("option");
@@ -77,9 +78,9 @@ function loadQuestion() {
         btn.setAttribute("role", "radio");
         btn.setAttribute("aria-checked", "false");
 
-        
         fragment.appendChild(btn);
     });
+    optionsContainer.appendChild(fragment);
 
     selectedOption = null;
     document.getElementById("next-btn").disabled = true;
@@ -134,7 +135,12 @@ function prevQuestion() {
 }
 
 function confirmSubmit() {
-    document.getElementById("confirm-popup").style.display = "block";
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.openDialog) {
+        window.openDialog(confirmPopup, { initialFocusId: "confirm-yes" });
+    } else {
+        confirmPopup.style.display = "block";
+    }
 }
 
 function submitQuiz() {
@@ -147,7 +153,12 @@ function submitQuiz() {
         score++;
     }
 
-    document.getElementById("confirm-popup").style.display = "none";
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.closeDialog) {
+        window.closeDialog(confirmPopup);
+    } else {
+        confirmPopup.style.display = "none";
+    }
     showResults();
 }
 
@@ -172,21 +183,36 @@ function restartQuiz() {
 
 
 function showPopup() {
-    lastFocusedEl = document.activeElement;
-    document.getElementById("popup").style.display = "block";
-    const okBtn = document.getElementById("popup-ok");
-    if (okBtn) okBtn.focus();
+    const popup = document.getElementById("popup");
+    if (window.openDialog) {
+        window.openDialog(popup, { initialFocusId: "popup-ok" });
+    } else {
+        lastFocusedEl = document.activeElement;
+        popup.style.display = "block";
+        const okBtn = document.getElementById("popup-ok");
+        if (okBtn) okBtn.focus();
+    }
     announce("Warning: Please select an answer before proceeding.");
 }
 
 function closePopup() {
-    document.getElementById("popup").style.display = "none";
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    const popup = document.getElementById("popup");
+    if (window.closeDialog) {
+        window.closeDialog(popup);
+    } else {
+        popup.style.display = "none";
+        if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    }
 }
 
 function closeConfirmPopup() {
-    document.getElementById("confirm-popup").style.display = "none";
-    if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    const confirmPopup = document.getElementById("confirm-popup");
+    if (window.closeDialog) {
+        window.closeDialog(confirmPopup);
+    } else {
+        confirmPopup.style.display = "none";
+        if (lastFocusedEl && typeof lastFocusedEl.focus === "function") lastFocusedEl.focus();
+    }
 }
 
 

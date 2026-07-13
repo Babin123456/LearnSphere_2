@@ -577,12 +577,22 @@
 
     if (submitBtn) submitBtn.disabled = false;
 
-    modal.style.display = "block";
+    if (window.openDialog) {
+      window.openDialog(modal);
+    } else {
+      modal.style.display = "block";
+    }
   }
 
   function closeModal() {
     const modal = document.getElementById("reviewModal");
-    if (modal) modal.style.display = "none";
+    if (modal) {
+      if (window.closeDialog) {
+        window.closeDialog(modal);
+      } else {
+        modal.style.display = "none";
+      }
+    }
   }
 
   function readQuizAnswers() {
