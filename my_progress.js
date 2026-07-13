@@ -932,6 +932,28 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.achievements?.renderBadges) {
     window.achievements.renderBadges("badgesContainerMyProgress");
   }
+
+  if (window.achievements?.renderStreakTimeline) {
+    window.achievements.renderStreakTimeline("streakTimelineContainer");
+  }
+
+  // Notification Center inline card
+  if (window.notifications?.renderNotificationCenter) {
+    window.notifications.renderNotificationCenter("notifCenterContainer");
+  }
+
+  // Update the inline unread badge in the NC card header
+  (function updateNCBadge() {
+    const badge = document.getElementById("nc-unread-badge");
+    if (!badge) return;
+    const unread = window.notifications?.getUnread?.() || [];
+    if (unread.length > 0) {
+      badge.textContent = `${unread.length} unread`;
+      badge.style.display = "inline";
+    } else {
+      badge.style.display = "none";
+    }
+  })();
 });
 
 

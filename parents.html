@@ -144,6 +144,76 @@
         </div>
     </section>
 
+    <!-- ── Notification Digest Settings ── -->
+    <section class="content" style="padding-top:0; max-width:980px; margin:0 auto; padding-bottom:32px;">
+      <div class="card" style="background:#0f1115; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2); margin-top:16px;" id="digestSettingsCard">
+        <h2 style="margin-top:0; display:flex; align-items:center; gap:10px;">
+          📬 Notification Digest Settings
+          <span style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:rgba(255,255,255,0.4);">Parents</span>
+        </h2>
+        <p style="font-size:13px; color:rgba(255,255,255,0.65); margin-bottom:20px;">
+          Receive a rolled-up summary of your child's notifications instead of individual alerts.
+        </p>
+
+        <!-- Toggle row -->
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:700; font-size:14px;">
+            <span id="digestToggleKnob" style="
+              display:inline-flex; width:44px; height:24px; border-radius:999px;
+              background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+              align-items:center; padding:2px; cursor:pointer; transition:background 0.25s ease;
+              position:relative;">
+              <span id="digestKnobDot" style="
+                width:18px; height:18px; border-radius:50%;
+                background:rgba(255,255,255,0.55); transition:transform 0.25s ease;
+                display:block;"></span>
+            </span>
+            Enable Daily Digest
+          </label>
+          <span id="digestStatusLabel" style="font-size:12px; color:rgba(255,255,255,0.45);">Off</span>
+        </div>
+
+        <!-- Frequency radio (shown when enabled) -->
+        <div id="digestFrequencyRow" style="display:none; margin-bottom:18px; padding:14px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px;">
+          <div style="font-size:12px; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Frequency</div>
+          <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+              <input type="radio" name="digestFreq" id="digestFreqDaily" value="daily" checked style="accent-color:#66fcf1;" />
+              Daily digest
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+              <input type="radio" name="digestFreq" id="digestFreqWeekly" value="weekly" style="accent-color:#66fcf1;" />
+              Weekly digest
+            </label>
+          </div>
+        </div>
+
+        <!-- Category checkboxes (shown when enabled) -->
+        <div id="digestCategoriesRow" style="display:none; margin-bottom:18px; padding:14px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px;">
+          <div style="font-size:12px; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Include categories</div>
+          <div id="digestCategoryChecks" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+        </div>
+
+        <!-- Preview + Save row -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+          <button id="digestSaveBtn" type="button" style="
+            background:linear-gradient(135deg,rgba(102,252,241,0.18),rgba(69,162,158,0.14));
+            border:1px solid rgba(102,252,241,0.4); color:#66fcf1;
+            border-radius:10px; padding:10px 18px; font-weight:800; cursor:pointer; font-size:13px;
+            transition:opacity 0.2s;">Save settings</button>
+          <button id="digestPreviewBtn" type="button" style="
+            background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
+            color:rgba(255,255,255,0.8); border-radius:10px; padding:10px 18px;
+            font-weight:700; cursor:pointer; font-size:13px;">Preview Digest</button>
+        </div>
+
+        <!-- Digest preview area -->
+        <div id="digestPreviewArea" style="display:none; margin-top:16px; padding:14px 16px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-size:13px;"></div>
+
+        <div id="digestSavedMsg" style="display:none; margin-top:12px; color:#66fcf1; font-size:13px; font-weight:700;">✓ Settings saved!</div>
+      </div>
+    </section>
+
     <script src="navbar.js"></script>
     <script src="script.js"></script>
     <script src="accessibility.js" defer></script>
@@ -151,6 +221,103 @@
     <script src="quizProgress.js"></script>
     <script src="dashboardProgress.js"></script>
     <script src="weeklyReport.js"></script>
+    <script src="notifications.js"></script>
+    <script>
+      (function() {
+        // ── Digest Settings UI ──
+        const CATEGORY_META_LOCAL = {
+          grades:       { label: "Grades",       icon: "📊" },
+          reminders:    { label: "Reminders",    icon: "⏰" },
+          offline_sync: { label: "Sync",         icon: "🔄" },
+          streak:       { label: "Streak",       icon: "🔥" },
+          quiz_ready:   { label: "Quiz",         icon: "📚" },
+          weekly_report:{ label: "Weekly",       icon: "📅" },
+          general:      { label: "General",      icon: "🔔" }
+        };
+
+        const knob     = document.getElementById("digestToggleKnob");
+        const dot      = document.getElementById("digestKnobDot");
+        const statusLbl= document.getElementById("digestStatusLabel");
+        const freqRow  = document.getElementById("digestFrequencyRow");
+        const catRow   = document.getElementById("digestCategoriesRow");
+        const catChecks= document.getElementById("digestCategoryChecks");
+        const saveBtn  = document.getElementById("digestSaveBtn");
+        const previewBtn = document.getElementById("digestPreviewBtn");
+        const previewArea= document.getElementById("digestPreviewArea");
+        const savedMsg = document.getElementById("digestSavedMsg");
+
+        function loadAndApply() {
+          const s = window.notifications?.getDigestSetting?.() || { enabled:false, frequency:"daily", categories:[] };
+          applyState(s.enabled, s.frequency, s.categories || []);
+        }
+
+        function applyState(enabled, frequency, selectedCats) {
+          knob.style.background = enabled ? "rgba(102,252,241,0.4)" : "rgba(255,255,255,0.1)";
+          knob.style.borderColor = enabled ? "rgba(102,252,241,0.7)" : "rgba(255,255,255,0.2)";
+          dot.style.transform = enabled ? "translateX(20px)" : "translateX(0)";
+          dot.style.background = enabled ? "#66fcf1" : "rgba(255,255,255,0.55)";
+          statusLbl.textContent = enabled ? "On" : "Off";
+          statusLbl.style.color = enabled ? "#66fcf1" : "rgba(255,255,255,0.45)";
+          freqRow.style.display = enabled ? "block" : "none";
+          catRow.style.display  = enabled ? "block" : "none";
+
+          const daily = document.getElementById("digestFreqDaily");
+          const weekly= document.getElementById("digestFreqWeekly");
+          if (daily) daily.checked = frequency !== "weekly";
+          if (weekly) weekly.checked = frequency === "weekly";
+
+          // Build category checkboxes
+          catChecks.innerHTML = "";
+          Object.entries(CATEGORY_META_LOCAL).forEach(([key, meta]) => {
+            const isChecked = selectedCats.includes(key) || selectedCats.length === 0;
+            const label = document.createElement("label");
+            label.style.cssText = "display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px;";
+            label.innerHTML = `<input type="checkbox" value="${key}" ${isChecked ? "checked" : ""} style="accent-color:#66fcf1;"> ${meta.icon} ${meta.label}`;
+            catChecks.appendChild(label);
+          });
+        }
+
+        // Toggle click
+        knob.addEventListener("click", () => {
+          const s = window.notifications?.getDigestSetting?.() || { enabled:false, frequency:"daily", categories:[] };
+          const newEnabled = !s.enabled;
+          applyState(newEnabled, s.frequency, s.categories || []);
+        });
+
+        // Save
+        saveBtn.addEventListener("click", () => {
+          const enabled = dot.style.transform === "translateX(20px)";
+          const freq = document.getElementById("digestFreqWeekly")?.checked ? "weekly" : "daily";
+          const cats = [...catChecks.querySelectorAll("input[type=checkbox]:checked")].map(c => c.value);
+          window.notifications?.setDigestSetting?.({ enabled, frequency: freq, categories: cats });
+          savedMsg.style.display = "block";
+          setTimeout(() => { savedMsg.style.display = "none"; }, 2500);
+        });
+
+        // Preview
+        previewBtn.addEventListener("click", () => {
+          const s = window.notifications?.getDigestSetting?.() || { frequency:"daily" };
+          const digest = window.notifications?.buildDigest?.(s.frequency || "daily");
+          previewArea.style.display = "block";
+          if (!digest || digest.totalCount === 0) {
+            previewArea.innerHTML = "<em style='color:rgba(255,255,255,0.5)'>No notifications in the digest period yet.</em>";
+            return;
+          }
+          let html = `<div style="font-weight:700; margin-bottom:10px; color:#66fcf1;">📬 ${s.frequency === "weekly" ? "Weekly" : "Daily"} Digest — ${digest.totalCount} notification${digest.totalCount !== 1 ? "s" : ""} (${digest.unreadCount} unread)</div>`;
+          Object.entries(digest.grouped).forEach(([cat, items]) => {
+            const meta = CATEGORY_META_LOCAL[cat] || { label: cat, icon: "🔔" };
+            html += `<div style="margin-top:10px;"><strong>${meta.icon} ${meta.label}</strong> (${items.length})</div>`;
+            html += `<ul style="margin:4px 0 0 14px; color:rgba(255,255,255,0.72); line-height:1.6;">`;
+            items.slice(0, 5).forEach(n => { html += `<li>${n.title} — <span style="opacity:0.65">${n.message}</span></li>`; });
+            if (items.length > 5) html += `<li style="opacity:0.5">…and ${items.length - 5} more</li>`;
+            html += "</ul>";
+          });
+          previewArea.innerHTML = html;
+        });
+
+        document.addEventListener("DOMContentLoaded", loadAndApply);
+      })();
+    </script>
 </body>
 </html>
 
