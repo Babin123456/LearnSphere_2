@@ -48,6 +48,71 @@
       "medium": "Medium",
       "hard": "Hard"
     }
+  },
+  "badges": {
+    "sectionTitle": "Achievements & Badges",
+    "streakTimelineTitle": "Streaks & Milestones",
+    "streakTimelineSubtitle": "Track your daily learning streak and celebrate quiz completion milestones.",
+    "calendarLabel": "Last 30 Days",
+    "streakMilestonesLabel": "Streak Milestones",
+    "quizMilestonesLabel": "Quiz Milestones",
+    "currentStreak": "Current Streak",
+    "longestStreak": "Longest Streak",
+    "totalQuizzes": "Total Quizzes",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "noAchievements": "No achievements unlocked yet.",
+    "achievementUnlocked": "Achievement Unlocked!",
+    "rules": {
+      "streak_3_days": {
+        "title": "3-Day Streak",
+        "description": "Practice 3 days in a row."
+      },
+      "streak_7_days": {
+        "title": "Week Warrior",
+        "description": "Practice every day for 7 consecutive days."
+      },
+      "streak_14_days": {
+        "title": "Fortnight Focus",
+        "description": "Practice every day for 14 consecutive days."
+      },
+      "streak_30_days": {
+        "title": "Monthly Master",
+        "description": "30 days without missing a single day!"
+      },
+      "milestone_1_quiz": {
+        "title": "First Step",
+        "description": "Complete your very first quiz."
+      },
+      "milestone_10_quizzes": {
+        "title": "Quiz Enthusiast",
+        "description": "Complete 10 quizzes total."
+      },
+      "milestone_25_quizzes": {
+        "title": "Halfway Hero",
+        "description": "Complete 25 quizzes total."
+      },
+      "milestone_50_quizzes": {
+        "title": "Dedicated Learner",
+        "description": "Complete 50 quizzes — serious commitment!"
+      },
+      "milestone_100_quizzes": {
+        "title": "Century Scholar",
+        "description": "Complete 100 quizzes. You're a legend!"
+      },
+      "perfect_3_quizzes_in_week": {
+        "title": "3 Perfect Quizzes in a Week",
+        "description": "Achieve 100% accuracy in 3 quizzes within the same week."
+      },
+      "mastery_gt_80_any_skill": {
+        "title": "Mastery > 80% in Any Skill",
+        "description": "Reach at least 80% accuracy in any skill."
+      },
+      "improve_10pct_recent": {
+        "title": "Accuracy Improvement",
+        "description": "Improve your accuracy by 10% compared to the previous 3 days."
+      }
+    }
   }
 }
 

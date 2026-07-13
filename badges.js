@@ -10,6 +10,7 @@
  *     badgeProgress: { [badgeId]: {...} }
  * - UI:
  *     locked vs unlocked + progress toward badge
+ *     renderStreakTimeline(containerId) — 30-day heatmap + milestone track
  * - Persistence: localStorage key learnsphere_achievements_v1
  */
 
@@ -44,32 +45,131 @@
       description: "Reach at least 80% accuracy in any skill."
     },
 
+    // ── Streaks ──
+    {
+      id: "streak_3_days",
+      title: "3-Day Streak",
+      icon: "⚡",
+      reward: { type: "badge" },
+      condition: {
+        type: "streak_threshold",
+        params: { targetStreakDays: 3 }
+      },
+      description: "Practice 3 days in a row.",
+      category: "streak",
+      milestoneOrder: 1
+    },
     {
       id: "streak_7_days",
-      title: "7-day study streak",
+      title: "Week Warrior",
       icon: "🔥",
       reward: { type: "badge" },
       condition: {
         type: "streak_threshold",
         params: { targetStreakDays: 7 }
       },
-      description: "Practice every day for 7 consecutive days."
+      description: "Practice every day for 7 consecutive days.",
+      category: "streak",
+      milestoneOrder: 2
     },
     {
       id: "streak_14_days",
-      title: "14-day study streak",
+      title: "Fortnight Focus",
       icon: "🌟",
       reward: { type: "badge" },
       condition: {
         type: "streak_threshold",
         params: { targetStreakDays: 14 }
       },
-      description: "Practice every day for 14 consecutive days."
+      description: "Practice every day for 14 consecutive days.",
+      category: "streak",
+      milestoneOrder: 3
+    },
+    {
+      id: "streak_30_days",
+      title: "Monthly Master",
+      icon: "💎",
+      reward: { type: "badge" },
+      condition: {
+        type: "streak_threshold",
+        params: { targetStreakDays: 30 }
+      },
+      description: "30 days without missing a single day!",
+      category: "streak",
+      milestoneOrder: 4
     },
 
+    // ── Quiz Milestones (total quiz completions) ──
+    {
+      id: "milestone_1_quiz",
+      title: "First Step",
+      icon: "🥚",
+      reward: { type: "badge" },
+      condition: {
+        type: "quizzes_completed_threshold",
+        params: { targetQuizzesCompleted: 1 }
+      },
+      description: "Complete your very first quiz.",
+      category: "milestone",
+      milestoneOrder: 1
+    },
+    {
+      id: "milestone_10_quizzes",
+      title: "Quiz Enthusiast",
+      icon: "🥇",
+      reward: { type: "badge" },
+      condition: {
+        type: "quizzes_completed_threshold",
+        params: { targetQuizzesCompleted: 10 }
+      },
+      description: "Complete 10 quizzes total.",
+      category: "milestone",
+      milestoneOrder: 2
+    },
+    {
+      id: "milestone_25_quizzes",
+      title: "Halfway Hero",
+      icon: "🏅",
+      reward: { type: "badge" },
+      condition: {
+        type: "quizzes_completed_threshold",
+        params: { targetQuizzesCompleted: 25 }
+      },
+      description: "Complete 25 quizzes total.",
+      category: "milestone",
+      milestoneOrder: 3
+    },
+    {
+      id: "milestone_50_quizzes",
+      title: "Dedicated Learner",
+      icon: "🎖️",
+      reward: { type: "badge" },
+      condition: {
+        type: "quizzes_completed_threshold",
+        params: { targetQuizzesCompleted: 50 }
+      },
+      description: "Complete 50 quizzes — serious commitment!",
+      category: "milestone",
+      milestoneOrder: 4
+    },
+    {
+      id: "milestone_100_quizzes",
+      title: "Century Scholar",
+      icon: "👑",
+      reward: { type: "badge" },
+      condition: {
+        type: "quizzes_completed_threshold",
+        params: { targetQuizzesCompleted: 100 }
+      },
+      description: "Complete 100 quizzes. You're a legend!",
+      category: "milestone",
+      milestoneOrder: 5
+    },
+
+    // ── Accuracy Improvement ──
     {
       id: "improve_10pct_recent",
-      title: "Accuracy improvement",
+      title: "Accuracy Improvement",
       icon: "📈",
       reward: { type: "badge" },
       condition: {
@@ -81,10 +181,9 @@
           minRecentAttempts: 2
         }
       },
-      description: "Improve your average accuracy by at least 10% (recent 3 days vs previous 3 days)."
+      description: "Improve your accuracy by 10% compared to the previous 3 days."
     }
   ];
-
 
   // ---------------------------
   // 2) Persistence
@@ -133,6 +232,14 @@
     return `${d.getFullYear()}-W${weekNo}`;
   }
 
+  function localISODate(d) {
+    const dd = new Date(d);
+    const yyyy = dd.getFullYear();
+    const mm = String(dd.getMonth() + 1).padStart(2, "0");
+    const day = String(dd.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${day}`;
+  }
+
   // ---------------------------
   // 4) Stats extraction
   // ---------------------------
@@ -145,6 +252,10 @@
     } catch {
       return [];
     }
+  }
+
+  function getTotalQuizzesCompleted() {
+    return getQuizAttemptsRaw().length;
   }
 
   function getPerfectAttemptsInWindow({ windowType = "week", perfectAccuracy = 1.0 } = {}) {
@@ -168,7 +279,6 @@
         if (getWeekNumber(a.finishedAt) !== currentWindowKey) continue;
       }
 
-      // Considered (within window)
       totalConsidered++;
 
       const isPerfect = a.accuracy >= perfectAccuracy;
@@ -182,7 +292,6 @@
   }
 
   function getAnySkillMasteryAccuracy() {
-    // Uses quizProgress.js mastery stats
     if (!window.quizProgress || typeof window.quizProgress.getMasteryStats !== "function") {
       return { bestAccuracy: null, bestSkillId: null };
     }
@@ -218,7 +327,8 @@
         const current = Number(s?.currentStreak);
         return {
           currentStreakDays: Number.isFinite(current) ? current : 0,
-          lastActiveDate: s?.lastActiveDate || null
+          lastActiveDate: s?.lastActiveDate || null,
+          longestStreak: Number(s?.longestStreak) || 0
         };
       }
     } catch {}
@@ -228,11 +338,12 @@
       const current = Number(st?.currentStreak);
       return {
         currentStreakDays: Number.isFinite(current) ? current : 0,
-        lastActiveDate: st?.lastPracticeDate || null
+        lastActiveDate: st?.lastPracticeDate || null,
+        longestStreak: Number(st?.longestStreak) || 0
       };
     } catch {}
 
-    return { currentStreakDays: 0, lastActiveDate: null };
+    return { currentStreakDays: 0, lastActiveDate: null, longestStreak: 0 };
   }
 
   function getAccuracyImprovementDerived({ recentDays = 3, previousDays = 3, minRecentAttempts = 2 } = {}) {
@@ -248,14 +359,6 @@
     }
 
     const now = new Date();
-
-    function localISODate(d) {
-      const dd = new Date(d);
-      const yyyy = dd.getFullYear();
-      const mm = String(dd.getMonth() + 1).padStart(2, "0");
-      const day = String(dd.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${day}`;
-    }
 
     function parseISOToToken(isoDateYYYYMMDD) {
       if (!isoDateYYYYMMDD || typeof isoDateYYYYMMDD !== "string") return null;
@@ -293,7 +396,6 @@
       const token = parseISOToToken(a.practiceDate);
       if (token == null) continue;
 
-      // Only consider attempts where accuracy is usable (0..1)
       const acc = typeof a.accuracy === "number" && !Number.isNaN(a.accuracy) ? a.accuracy : null;
       const totalQ = typeof a.totalQuestions === "number" && !Number.isNaN(a.totalQuestions) ? a.totalQuestions : null;
 
@@ -330,18 +432,15 @@
     };
   }
 
-
   // ---------------------------
   // 5) Rule evaluator + progress
   // ---------------------------
   function evaluateBadge(rule, derived) {
     const { type, params } = rule.condition || {};
 
-    // Progress objects are used for UI. unlocked is boolean.
     if (type === "perfect_quizzes_in_week") {
       const target = Number(params?.targetPerfectQuizzes) || 0;
       const perfectAccuracy = typeof params?.perfectAccuracy === "number" ? params.perfectAccuracy : 1.0;
-      const windowType = params?.window || "week";
 
       const { perfectCount } = derived.perfectAttemptsInWindow;
       const pct = target > 0 ? Math.min(1, perfectCount / target) : 0;
@@ -397,6 +496,22 @@
       };
     }
 
+    if (type === "quizzes_completed_threshold") {
+      const target = Number(params?.targetQuizzesCompleted) || 0;
+      const current = derived.totalQuizzesCompleted ?? 0;
+      const pct = target > 0 ? Math.min(1, current / target) : 0;
+      return {
+        unlocked: target > 0 && current >= target,
+        progress: {
+          kind: "count",
+          current,
+          target,
+          percent: pct
+        },
+        progressText: target > 0 ? `${Math.min(current, target)}/${target} quizzes` : "—"
+      };
+    }
+
     if (type === "accuracy_improvement") {
       const recentDays = Number(params?.recentDays) || 3;
       const previousDays = Number(params?.previousDays) || 3;
@@ -415,11 +530,8 @@
 
       let pct = 0;
       if (canScore) {
-        // Map delta [0..threshold] to [0..1]
-        // e.g., improvement=0 => 0, improvement=threshold => 1
         pct = thresholdDelta > 0 ? Math.max(0, Math.min(1, improvement / thresholdDelta)) : 0;
       }
-
 
       const deltaMet = canScore && improvement >= thresholdDelta;
 
@@ -459,6 +571,7 @@
       }),
       anySkillBestAccuracy: getAnySkillMasteryAccuracy(),
       currentStreak: getCurrentStreakDerived(),
+      totalQuizzesCompleted: getTotalQuizzesCompleted(),
       accuracyImprovement: getAccuracyImprovementDerived({
         recentDays: 3,
         previousDays: 3,
@@ -631,7 +744,7 @@
   }
 
   // ---------------------------
-  // 8) UI rendering
+  // 8) UI rendering — badge cards
   // ---------------------------
   function ensureStyles(containerEl) {
     if (!containerEl) return;
@@ -731,7 +844,6 @@
 
     const unlockedRules = BADGE_RULES.filter(r => unlockedSet.has(r.id));
 
-    // Sort unlocked by unlockedAt desc if present; else keep order.
     unlockedRules.sort((a, b) => {
       const atA = progress?.[a.id]?.unlockedAt ? new Date(progress[a.id].unlockedAt).getTime() : 0;
       const atB = progress?.[b.id]?.unlockedAt ? new Date(progress[b.id].unlockedAt).getTime() : 0;
@@ -793,12 +905,232 @@
     `;
   }
 
+  // ---------------------------
+  // 9) Streak history (for calendar heatmap)
+  // ---------------------------
+  /**
+   * Returns an array of the last `days` local date strings (YYYY-MM-DD),
+   * each annotated with { date, active: bool, isToday: bool }.
+   * "active" = there was at least one quiz attempt on that day.
+   */
+  function getStreakHistory(days = 30) {
+    const attempts = getQuizAttemptsRaw();
+
+    // Build a Set of active dates from attempt records
+    const activeDates = new Set();
+    for (const a of attempts) {
+      // practiceDate is the canonical YYYY-MM-DD field
+      if (a?.practiceDate && typeof a.practiceDate === "string") {
+        activeDates.add(a.practiceDate);
+      }
+      // Fallback: derive from finishedAt ISO timestamp
+      if (a?.finishedAt && !a.practiceDate) {
+        const d = localISODate(a.finishedAt);
+        if (d) activeDates.add(d);
+      }
+    }
+
+    const today = localISODate(new Date());
+    const result = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = localISODate(d);
+      result.push({
+        date: dateStr,
+        active: activeDates.has(dateStr),
+        isToday: dateStr === today
+      });
+    }
+
+    return result;
+  }
+
+  // ---------------------------
+  // 10) Streak Timeline Renderer
+  // ---------------------------
+  /**
+   * Renders the full Streaks & Milestones timeline card into the given container.
+   * Includes:
+   *  - 30-day activity calendar heatmap
+   *  - Horizontal milestone track for quiz completions
+   *  - Streak badge nodes (3/7/14/30 days)
+   */
+  function renderStreakTimeline(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Run evaluations to refresh state
+    const derived = buildDerived();
+    const ach = loadAchievements();
+    const unlockedSet = getUnlockedSet(ach);
+    const progress = ach.badgeProgress || {};
+
+    const { currentStreakDays, longestStreak } = derived.currentStreak;
+    const totalQuizzes = derived.totalQuizzesCompleted;
+
+    // 30-day history
+    const history = getStreakHistory(30);
+
+    // Streak milestone nodes
+    const streakNodes = BADGE_RULES.filter(r => r.category === "streak")
+      .sort((a, b) => (a.milestoneOrder || 0) - (b.milestoneOrder || 0));
+
+    // Quiz milestone nodes
+    const quizNodes = BADGE_RULES.filter(r => r.category === "milestone")
+      .sort((a, b) => (a.milestoneOrder || 0) - (b.milestoneOrder || 0));
+
+    // Build calendar HTML (7-column grid, Mon–Sun)
+    const dayLetters = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+    // Find the weekday of the first cell and prepend empties
+    const firstDate = history[0]?.date;
+    const firstDay = firstDate ? new Date(firstDate + "T00:00:00").getDay() : 0;
+    const prefixCells = Array.from({ length: firstDay }, () =>
+      `<div class="streak-day-box streak-day-empty" aria-hidden="true"></div>`
+    ).join("");
+
+    const dayCells = history.map(({ date, active, isToday }) => {
+      let cls = "streak-day-box";
+      let label = "";
+      let title = date;
+      if (isToday) { cls += " streak-day-today"; label = "★"; }
+      else if (active) cls += " streak-day-active";
+      else cls += " streak-day-inactive";
+      return `<div class="${cls}" title="${title}" aria-label="${date}${active ? " (active)" : ""}">${label}</div>`;
+    }).join("");
+
+    // Quiz milestone track HTML
+    const quizMilestoneTargets = quizNodes.map(n => n.condition.params.targetQuizzesCompleted);
+    const maxTarget = Math.max(...quizMilestoneTargets);
+    const quizPct = Math.min(100, (totalQuizzes / maxTarget) * 100);
+
+    const quizMilestoneNodesHTML = quizNodes.map((node, idx) => {
+      const target = node.condition.params.targetQuizzesCompleted;
+      const isUnlocked = unlockedSet.has(node.id);
+      const posLeft = ((target / maxTarget) * 100).toFixed(1);
+      const cls = isUnlocked ? "milestone-node milestone-node--unlocked" : "milestone-node";
+      const unlockedAt = isUnlocked && progress[node.id]?.unlockedAt
+        ? new Date(progress[node.id].unlockedAt).toLocaleDateString()
+        : null;
+      return `
+        <div class="${cls}" style="left:${posLeft}%" title="${node.title}${unlockedAt ? " — Unlocked " + unlockedAt : ""}">
+          <div class="milestone-node-icon">${node.icon}</div>
+          <div class="milestone-node-label">${target}</div>
+          ${isUnlocked ? '<div class="milestone-node-check">✓</div>' : ''}
+        </div>
+      `;
+    }).join("");
+
+    // Streak badge track HTML
+    const streakMax = Math.max(...streakNodes.map(n => n.condition.params.targetStreakDays));
+    const streakPct = Math.min(100, (currentStreakDays / streakMax) * 100);
+
+    const streakMilestoneNodesHTML = streakNodes.map(node => {
+      const target = node.condition.params.targetStreakDays;
+      const isUnlocked = unlockedSet.has(node.id);
+      const posLeft = ((target / streakMax) * 100).toFixed(1);
+      const cls = isUnlocked ? "milestone-node milestone-node--unlocked" : "milestone-node";
+      const unlockedAt = isUnlocked && progress[node.id]?.unlockedAt
+        ? new Date(progress[node.id].unlockedAt).toLocaleDateString()
+        : null;
+      return `
+        <div class="${cls}" style="left:${posLeft}%" title="${node.title}${unlockedAt ? " — Unlocked " + unlockedAt : ""}">
+          <div class="milestone-node-icon">${node.icon}</div>
+          <div class="milestone-node-label">${target}d</div>
+          ${isUnlocked ? '<div class="milestone-node-check">✓</div>' : ''}
+        </div>
+      `;
+    }).join("");
+
+    container.innerHTML = `
+      <!-- KPI Row -->
+      <div class="streak-kpi-row">
+        <div class="streak-kpi-chip">
+          <span class="streak-kpi-icon">🔥</span>
+          <div>
+            <div class="streak-kpi-value">${currentStreakDays}<span class="streak-kpi-unit"> day${currentStreakDays !== 1 ? "s" : ""}</span></div>
+            <div class="streak-kpi-label">Current Streak</div>
+          </div>
+        </div>
+        <div class="streak-kpi-chip">
+          <span class="streak-kpi-icon">🌟</span>
+          <div>
+            <div class="streak-kpi-value">${longestStreak}<span class="streak-kpi-unit"> day${longestStreak !== 1 ? "s" : ""}</span></div>
+            <div class="streak-kpi-label">Longest Streak</div>
+          </div>
+        </div>
+        <div class="streak-kpi-chip">
+          <span class="streak-kpi-icon">📚</span>
+          <div>
+            <div class="streak-kpi-value">${totalQuizzes}</div>
+            <div class="streak-kpi-label">Total Quizzes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 30-Day Calendar -->
+      <div class="streak-section-title">📅 Last 30 Days</div>
+      <div class="streak-calendar-legend">
+        <span class="legend-box legend-active"></span><span>Active</span>
+        <span class="legend-box legend-inactive"></span><span>Inactive</span>
+        <span class="legend-box legend-today"></span><span>Today</span>
+      </div>
+      <div class="streak-day-header">
+        ${dayLetters.map(d => `<div class="streak-day-letter">${d}</div>`).join("")}
+      </div>
+      <div class="streak-calendar" role="grid" aria-label="30-day activity calendar">
+        ${prefixCells}${dayCells}
+      </div>
+
+      <!-- Streak Milestone Track -->
+      <div class="streak-section-title" style="margin-top:24px;">⚡ Streak Milestones</div>
+      <div class="milestone-track-wrap">
+        <div class="milestone-track-bar">
+          <div class="milestone-track-fill" style="width:${streakPct.toFixed(1)}%"></div>
+          <div class="milestone-track-nodes">
+            ${streakMilestoneNodesHTML}
+          </div>
+        </div>
+        <div class="milestone-track-labels">
+          ${streakNodes.map(node => {
+            const target = node.condition.params.targetStreakDays;
+            const posLeft = ((target / streakMax) * 100).toFixed(1);
+            const isUnlocked = unlockedSet.has(node.id);
+            return `<div class="milestone-label ${isUnlocked ? "milestone-label--unlocked" : ""}" style="left:${posLeft}%">${node.title}</div>`;
+          }).join("")}
+        </div>
+      </div>
+
+      <!-- Quiz Milestone Track -->
+      <div class="streak-section-title" style="margin-top:24px;">🏅 Quiz Milestones</div>
+      <div class="milestone-track-wrap">
+        <div class="milestone-track-bar">
+          <div class="milestone-track-fill" style="width:${quizPct.toFixed(1)}%"></div>
+          <div class="milestone-track-nodes">
+            ${quizMilestoneNodesHTML}
+          </div>
+        </div>
+        <div class="milestone-track-labels">
+          ${quizNodes.map(node => {
+            const target = node.condition.params.targetQuizzesCompleted;
+            const posLeft = ((target / maxTarget) * 100).toFixed(1);
+            const isUnlocked = unlockedSet.has(node.id);
+            return `<div class="milestone-label ${isUnlocked ? "milestone-label--unlocked" : ""}" style="left:${posLeft}%">${node.title}</div>`;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   // Expose
   window.achievements = {
     BADGE_RULES,
     renderBadges,
     renderTopUnlocked,
+    renderStreakTimeline,
+    getStreakHistory,
     checkAndNotify
   };
 })();
-
