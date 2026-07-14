@@ -54,17 +54,14 @@
 
 
         <!-- Result Box -->
-        <div id="result-box" class="hidden">
+        <section id="result-box" class="hidden" aria-labelledby="result-heading">
             <h2 tabindex="-1" id="result-heading">🎉 Quiz Completed!</h2>
             <p id="score"></p>
             <div class="button-group" role="group" aria-label="Quiz results actions">
-                <button onclick="restartQuiz()">Try Again 🔄</button>
-                <button class="motion" aria-label="Back to previous page">
-                    <a href="..\ray\ray.html">⬅ Back</a>
-                </button>
+                <button onclick="restartQuiz()" aria-label="Restart quiz">Try Again 🔄</button>
+                <button class="motion" onclick="window.location.href='../ray/ray.html'" aria-label="Back to previous page">⬅ Back</button>
             </div>
-
-        </div>
+        </section>
     </div>
 
     <script src="../offlineSync.js"></script>
