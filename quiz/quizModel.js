@@ -63,6 +63,25 @@
         return typeof fromArr === 'string' ? fromArr : '';
       })();
 
+      const difficultyIndex = (() => {
+        const d = q?.difficulty;
+        if (d === undefined || d === null || d === '') return null;
+
+        const n = typeof d === 'number' && Number.isFinite(d) ? d : null;
+        if (n !== null) return n <= 0 ? 0 : n >= 2 ? 2 : Math.round(n);
+
+        const s = String(d).toLowerCase().trim();
+        if (s === 'easy' || s === 'e') return 0;
+        if (s === 'medium' || s === 'med' || s === 'm') return 1;
+        if (s === 'hard' || s === 'h') return 2;
+
+        // If unknown string but numeric-like
+        const parsed = Number(s);
+        if (Number.isFinite(parsed)) return parsed <= 0 ? 0 : parsed >= 2 ? 2 : Math.round(parsed);
+
+        return null;
+      })();
+
 
       return {
         questionId: null,
@@ -70,14 +89,17 @@
         userAnswer: userAnswer ?? null,
         correctAnswer: correctAnswer ?? null,
         isCorrect,
+        difficultyIndex, // 0 easy, 1 medium, 2 hard (optional)
         scoreEarned: isCorrect ? 1 : 0,
         scorePossible: 1,
+
 
         // Explanation fields (optional)
         explanationCorrect,
         explanationWrong,
         explanationPicked,
       };
+
 
 
     });
