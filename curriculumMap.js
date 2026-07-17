@@ -2,7 +2,7 @@
   curriculumMap.js
 
   Renders an SVG curriculum graph from window.curriculumMapConfig.
-  Uses progress.js storage (learnsphere_progress) to color completed/in-progress nodes.
+  Uses progress.js storage (learnsphere_progress) to color locked/current/completed nodes.
 */
 
 (function () {
@@ -19,8 +19,6 @@
   }
 
   function loadProgressMap() {
-    // progress.js already defines topic ids + state logic, but it keeps helpers private.
-    // We'll read localStorage directly for states.
     try {
       const raw = localStorage.getItem("learnsphere_progress");
       const data = raw ? JSON.parse(raw) : {};
@@ -35,6 +33,7 @@
   }
 
   function colorForState(state) {
+    // locked: not-started
     if (state === "completed") return "#66fcf1";
     if (state === "in-progress") return "#f0a500";
     return "rgba(255,255,255,0.22)";
@@ -49,7 +48,7 @@
   function textForState(state) {
     if (state === "completed") return "Completed";
     if (state === "in-progress") return "In Progress";
-    return "Not Started";
+    return "Locked";
   }
 
   function buildGraph(config) {
@@ -57,22 +56,16 @@
     const edges = config.edges || [];
 
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
-    const incoming = new Map();
     const outgoing = new Map();
 
-    for (const n of nodes) {
-      incoming.set(n.id, []);
-      outgoing.set(n.id, []);
-    }
+    for (const n of nodes) outgoing.set(n.id, []);
 
     for (const e of edges) {
       if (!nodeMap.has(e.from) || !nodeMap.has(e.to)) continue;
       outgoing.get(e.from).push(e.to);
-      incoming.get(e.to).push(e.from);
     }
 
     // Topological layering (longest prerequisite chain)
-    // For small graphs it is fine.
     const indeg = new Map();
     const adj = new Map();
     for (const n of nodes) {
@@ -96,7 +89,6 @@
       }
     }
 
-    // Kahn's algorithm; dist as max prerequisite depth
     while (queue.length) {
       const u = queue.shift();
       const du = dist.get(u) || 0;
@@ -107,16 +99,14 @@
       }
     }
 
-    // Fallback: if cycles exist, some nodes may never get proper depth.
     for (const n of nodes) {
       if (!dist.has(n.id)) dist.set(n.id, 0);
     }
 
-    return { nodeMap, nodes, edges, incoming, outgoing, dist };
+    return { nodeMap, nodes, edges, dist };
   }
 
   function wrapLabel(label, maxLines = 2) {
-    // Split by spaces, greedily pack lines.
     const words = String(label).split(/\s+/).filter(Boolean);
     if (words.length <= 1) return [label];
 
@@ -139,9 +129,7 @@
 
   function createSvgEl(tag, attrs = {}) {
     const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    for (const [k, v] of Object.entries(attrs)) {
-      el.setAttribute(k, String(v));
-    }
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
     return el;
   }
 
@@ -153,14 +141,12 @@
     const nodes = graph.nodes;
     const layers = new Map();
 
-    // layer depth = graph.dist
     for (const n of nodes) {
       const layer = graph.dist.get(n.id) || 0;
       if (!layers.has(layer)) layers.set(layer, []);
       layers.get(layer).push(n.id);
     }
 
-    // Stable ordering by label
     for (const [layer, ids] of layers.entries()) {
       ids.sort((a, b) => String(graph.nodeMap.get(a)?.label || a).localeCompare(String(graph.nodeMap.get(b)?.label || b)));
       layers.set(layer, ids);
@@ -175,19 +161,15 @@
 
     const layerCount = layerKeys.length;
     let maxInLayer = 1;
-    for (const k of layerKeys) {
-      maxInLayer = Math.max(maxInLayer, layers.get(k).length);
-    }
+    for (const k of layerKeys) maxInLayer = Math.max(maxInLayer, layers.get(k).length);
 
     const width = Math.max(900, layerCount * (nodeW + xPad) - xPad + 140);
     const height = Math.max(420, maxInLayer * (nodeH + yPad) + 120);
 
     const positions = new Map();
-
     layerKeys.forEach((layerKey, li) => {
       const ids = layers.get(layerKey);
       const colX = 80 + li * (nodeW + xPad);
-
       const totalH = (ids.length - 1) * (nodeH + yPad);
       const topY = (height - totalH) / 2 - nodeH / 2;
 
@@ -201,11 +183,78 @@
     return { width, height, positions, nodeW, nodeH };
   }
 
+  function getTopicAccuracyPct(topicId) {
+    try {
+      const quizProg = window.quizProgress;
+      if (!quizProg || typeof quizProg.getAllTopicStats !== "function") return null;
+      const byTopic = quizProg.getAllTopicStats?.() || {};
+      const agg = byTopic?.[topicId];
+      if (!agg) return null;
+
+      const qTotal = Number(agg.questionsTotal) || 0;
+      const correctTotal = Number(agg.correctTotal) || 0;
+      if (qTotal <= 0) return null;
+      return (correctTotal / qTotal) * 100;
+    } catch {
+      return null;
+    }
+  }
+
+  function computeUnlockAndSyncStates({ config, progressMap }) {
+    const masteryCfg = config?.masteryUnlock || {};
+    const defaultThreshold = Number(masteryCfg.defaultMasteryThresholdPct) || 80;
+
+    const nodes = config.nodes || [];
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+    const edges = config.edges || [];
+    const prereqByNode = new Map();
+    for (const n of nodes) prereqByNode.set(n.id, []);
+    for (const e of edges) {
+      if (!prereqByNode.has(e.to)) prereqByNode.set(e.to, []);
+      prereqByNode.get(e.to).push(e.from);
+    }
+
+    const updated = { ...(progressMap || {}) };
+    let changed = false;
+
+    function getStoredState(id) {
+      return updated?.[id] || "not-started";
+    }
+
+    for (const n of nodes) {
+      const threshold = Number(nodeMap.get(n.id)?.masteryThresholdPct) || defaultThreshold;
+      const prereqs = prereqByNode.get(n.id) || [];
+      const prereqCompleted = prereqs.length === 0 || prereqs.every(pid => getStoredState(pid) === "completed");
+
+      const accPct = getTopicAccuracyPct(n.id);
+      const masteryReached = typeof accPct === "number" && accPct >= threshold;
+
+      if (prereqCompleted && masteryReached) {
+        if (getStoredState(n.id) !== "completed") {
+          updated[n.id] = "completed";
+          changed = true;
+        }
+      } else if (prereqCompleted && accPct != null && getStoredState(n.id) === "not-started") {
+        updated[n.id] = "in-progress";
+        changed = true;
+      }
+      // Otherwise remain locked (not-started) or keep existing completed.
+    }
+
+    if (changed) {
+      try {
+        localStorage.setItem("learnsphere_progress", JSON.stringify(updated));
+      } catch {}
+    }
+
+    return updated;
+  }
+
   function draw({ config, container, progressMap, completedOnly }) {
     const graph = buildGraph(config);
     const layout = computeLayout(graph);
 
-    // Create/ensure SVG
     clear(container);
     const svg = createSvgEl("svg", {
       id: CFG.svgId,
@@ -215,7 +264,6 @@
       style: "max-width:100%; height:auto; display:block; overflow:visible;"
     });
 
-    // Background
     svg.appendChild(createSvgEl("rect", {
       x: 0,
       y: 0,
@@ -225,7 +273,7 @@
     }));
 
     // Edges first
-    const visibleEdges = config.edges.filter(e => {
+    const visibleEdges = (config.edges || []).filter(e => {
       if (!graph.nodeMap.has(e.from) || !graph.nodeMap.has(e.to)) return false;
       if (!completedOnly) return true;
       const sFrom = getTopicState(progressMap, e.from);
@@ -255,7 +303,7 @@
       const sTo = getTopicState(progressMap, e.to);
       const active = (sFrom === "completed" && sTo === "completed");
 
-      const edge = createSvgEl("path", {
+      svg.appendChild(createSvgEl("path", {
         d: path,
         fill: "none",
         stroke: active ? "rgba(102,252,241,0.8)" : "rgba(255,255,255,0.18)",
@@ -263,12 +311,11 @@
         "stroke-linecap": "round",
         "data-from": e.from,
         "data-to": e.to
-      });
-      svg.appendChild(edge);
+      }));
     }
 
     // Nodes
-    const nodeIds = config.nodes.map(n => n.id).filter(id => graph.nodeMap.has(id));
+    const nodeIds = (config.nodes || []).map(n => n.id).filter(id => graph.nodeMap.has(id));
 
     for (const id of nodeIds) {
       const node = graph.nodeMap.get(id);
@@ -287,7 +334,6 @@
         opacity
       });
 
-      // Node card
       group.appendChild(createSvgEl("rect", {
         x: pos.x,
         y: pos.y,
@@ -299,7 +345,6 @@
         "stroke-width": state === "not-started" ? 1.2 : 2,
       }));
 
-      // Accent bar
       group.appendChild(createSvgEl("rect", {
         x: pos.x + 10,
         y: pos.y + 12,
@@ -310,7 +355,6 @@
         opacity: state === "not-started" ? 0.35 : 0.95
       }));
 
-      // Label
       const lines = wrapLabel(node.label, CFG.maxLabelLines);
       const text = createSvgEl("text", {
         x: pos.x + 24,
@@ -333,7 +377,6 @@
 
       group.appendChild(text);
 
-      // State badge
       group.appendChild(createSvgEl("text", {
         x: pos.x + pos.nodeW - 16,
         y: pos.y + 18,
@@ -345,56 +388,53 @@
         "pointer-events": "none",
       })).textContent = state === "completed" ? "✓" : state === "in-progress" ? "…" : "";
 
-      // Click/hover interactivity
       group.style.cursor = node.quizUrl ? "pointer" : "default";
 
       group.addEventListener("mouseenter", () => {
-        // highlight connected edges
         svg.querySelectorAll("path").forEach(p => {
           const f = p.getAttribute("data-from");
           const t = p.getAttribute("data-to");
           const isConn = f === id || t === id;
           p.style.stroke = isConn ? "rgba(102,252,241,0.9)" : p.getAttribute("stroke");
           p.style.strokeWidth = isConn ? 3.0 : 1.6;
-          if (p.style.stroke !== "") {
-            // keep
-          }
         });
       });
 
       group.addEventListener("mouseleave", () => {
-        // Re-render quickly to reset strokes
-        // (cheap for small graphs)
         draw({ config, container, progressMap, completedOnly });
       });
 
       group.addEventListener("click", () => {
         const s = getTopicState(progressMap, id);
         const title = `${node.label}\n${textForState(s)}`;
+
+        // Locked nodes are stored as "not-started" until prerequisites AND mastery threshold are met.
+        if (s === "not-started") {
+          alert(`${node.label}\nLocked — complete prerequisite topics and reach the mastery threshold to unlock.`);
+          return;
+        }
+
         if (node.quizUrl) {
-          // quick navigation
           window.location.href = node.quizUrl;
         } else {
           alert(title);
         }
       });
 
-      // Tooltip via <title> for accessibility
-      const title = createSvgEl("title");
-      title.textContent = `${node.label} — ${textForState(state)}`;
-      group.appendChild(title);
+      const titleEl = createSvgEl("title");
+      titleEl.textContent = `${node.label} — ${textForState(state)}`;
+      group.appendChild(titleEl);
 
       svg.appendChild(group);
     }
 
-    // Legend
     const legend = $(CFG.legendId);
     if (legend) {
       legend.innerHTML = `
         <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
           <div><span style="display:inline-block;width:14px;height:10px;border-radius:999px;background:${strokeForState("completed")}"></span> Completed</div>
           <div><span style="display:inline-block;width:14px;height:10px;border-radius:999px;background:${strokeForState("in-progress")}"></span> In Progress</div>
-          <div><span style="display:inline-block;width:14px;height:10px;border-radius:999px;background:rgba(255,255,255,0.22)"></span> Not Started</div>
+          <div><span style="display:inline-block;width:14px;height:10px;border-radius:999px;background:rgba(255,255,255,0.22)"></span> Locked</div>
         </div>
       `;
     }
@@ -407,7 +447,9 @@
     const container = $(CFG.containerId);
     if (!config || !container) return;
 
-    const progressMap = loadProgressMap();
+    let progressMap = loadProgressMap();
+    // Sync mastery -> unlock -> topic states before rendering
+    progressMap = computeUnlockAndSyncStates({ config, progressMap });
 
     const toggleEl = $(CFG.toggleCompletedOnlyId);
     const completedOnly = !!toggleEl?.checked;
@@ -419,7 +461,6 @@
       completedOnly,
     });
 
-    // Re-render on toggle changes
     if (toggleEl) {
       toggleEl.addEventListener("change", () => {
         const pm = loadProgressMap();
@@ -427,14 +468,10 @@
       });
     }
 
-    // Also re-render when user returns/opens after completion changes
     window.addEventListener("storage", () => {
       const pm = loadProgressMap();
       draw({ config, container, progressMap: pm, completedOnly: !!toggleEl?.checked });
     });
-
-    // For this app (single-tab), progress updates won't trigger storage events.
-    // However, progress.js doesn't currently emit events; so this is just a best-effort.
   }
 
   document.addEventListener("DOMContentLoaded", init);

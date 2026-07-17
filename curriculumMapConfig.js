@@ -9,6 +9,13 @@
   const CURRICULUM = {
     version: { major: 1, minor: 0 },
 
+    // Mastery unlock rules.
+    // Unlock/completion is based on topic accuracy from quiz analytics.
+    masteryUnlock: {
+      mode: "topic-accuracy",
+      defaultMasteryThresholdPct: 80,
+    },
+
     // Each node represents a topic/module.
     // quizUrl is optional; if provided, node click will navigate there.
     nodes: [
