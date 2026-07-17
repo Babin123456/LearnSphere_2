@@ -1055,21 +1055,36 @@ function logMistake(topicId, q) {
   const qid = `${topicId}:quiz:${qText.replace(/\s+/g, '-').toLowerCase()}`;
 
   const missedList = map[topicId].missedQids || [];
-  const exists = missedList.some(item => {
+  const existsIdx = missedList.findIndex(item => {
     if (item && typeof item === 'object') {
       return item.qid === qid;
     }
     return item === qid;
   });
 
-  if (!exists) {
+  // Selected misconception tags for the chosen option.
+  // Optional (backward compatible): if quizzes haven't been updated yet, this will be empty.
+  const selectedMisconceptionTags = (() => {
+    const tags = q?.selectedMisconceptionTags;
+    if (Array.isArray(tags)) return tags.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim());
+
+    // Backward compatible helper fields
+    const legacy = q?.misconceptionTags || q?.misconceptionsTags || q?.selectedMisconceptionTag;
+    if (Array.isArray(legacy)) return legacy.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim());
+    if (typeof legacy === 'string' && legacy.trim()) return [legacy.trim()];
+
+    return [];
+  })();
+
+  if (existsIdx === -1) {
     const qObj = {
       qid: qid,
       q: qText,
       options: q.options,
       answer: typeof q.answer === 'number' ? q.options[q.answer] : q.answer,
       answerIndex: typeof q.answer === 'number' ? q.answer : q.options.indexOf(q.answer),
-      explanation: q.explanation || ""
+      explanation: q.explanation || "",
+      selectedMisconceptionTags: selectedMisconceptionTags,
     };
     missedList.push(qObj);
     map[topicId].missedQids = missedList;
@@ -1079,8 +1094,24 @@ function logMistake(topicId, q) {
     } catch (e) {
       console.warn("LearnSphere: Could not save quiz mistake", e);
     }
+  } else {
+    // If the question already exists in missed list, merge in additional tags.
+    // Keep the first question snapshot stable but augment tags.
+    const existing = missedList[existsIdx];
+    if (existing && typeof existing === 'object') {
+      const prev = Array.isArray(existing.selectedMisconceptionTags) ? existing.selectedMisconceptionTags : [];
+      const merged = Array.from(new Set([...prev, ...selectedMisconceptionTags]));
+      existing.selectedMisconceptionTags = merged;
+      existing.updatedAt = Date.now();
+      map[topicId].missedQids = missedList;
+      map[topicId].updatedAt = Date.now();
+      try {
+        localStorage.setItem(MISSED_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
   }
 }
+
 
 function getTopicIdFromUrl() {
   const url = window.location.pathname;

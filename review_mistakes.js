@@ -94,41 +94,113 @@
       if (q && typeof q.__qid === "string") byQid.set(q.__qid, q);
     });
 
-    missedQids.forEach((qid, idx) => {
-      const q = byQid.get(qid);
-      const qText = q?.q || "(Question text unavailable)";
-      const correctIndex = typeof q?.answerIndex === "number" ? q.answerIndex : null;
-      const correctText =
-        correctIndex !== null && Array.isArray(q?.options) ? q.options[correctIndex] : "";
+    // Support both legacy missedQids shape (array of qid strings)
+    // and enriched shape (array of objects { qid, selectedMisconceptionTags }).
+    const normalizedMisses = missedQids.map((entry) => {
+      if (typeof entry === 'string') return { qid: entry, selectedMisconceptionTags: [] };
+      if (entry && typeof entry === 'object') {
+        const qid = typeof entry.qid === 'string' ? entry.qid : null;
+        const tags = Array.isArray(entry.selectedMisconceptionTags) ? entry.selectedMisconceptionTags : [];
+        return { qid, selectedMisconceptionTags: tags };
+      }
+      return { qid: null, selectedMisconceptionTags: [] };
+    }).filter(x => x.qid);
 
-      const item = document.createElement("div");
-      item.className = "review-mistake-item";
+    const totalMissed = normalizedMisses.length;
 
-      item.innerHTML = `
-        <div class="review-mistake-q">${idx + 1}. ${qText}</div>
-        <div class="review-mistake-meta">
-          <span>Correct answer: <strong>${correctText || "—"}</strong></span>
+    // Group by misconception tag (string)
+    const groups = new Map();
+
+    function getTagsForMiss(m) {
+      if (Array.isArray(m.selectedMisconceptionTags) && m.selectedMisconceptionTags.length > 0) return m.selectedMisconceptionTags;
+      return ['unknown-misconception'];
+    }
+
+    normalizedMisses.forEach((m) => {
+      const tags = getTagsForMiss(m);
+      tags.forEach(tag => {
+        if (!groups.has(tag)) groups.set(tag, []);
+        groups.get(tag).push(m);
+      });
+    });
+
+    const groupEntries = Array.from(groups.entries())
+      .map(([tag, misses]) => ({ tag, count: misses.length, misses }))
+      .sort((a, b) => b.count - a.count);
+
+    // Render: Mistakes by misconception (grouped)
+    groupEntries.forEach((g, idx) => {
+      const tagLabel = g.tag === 'unknown-misconception' ? 'Other (misconception not tagged)' : g.tag;
+
+      const micro = (window.misconceptionMicroLessonsConfig && window.misconceptionMicroLessonsConfig[g.tag])
+        ? window.misconceptionMicroLessonsConfig[g.tag]
+        : null;
+
+      const groupEl = document.createElement('div');
+      groupEl.className = 'review-mistake-item';
+
+      const title = micro?.title || `Practice: ${tagLabel}`;
+      const summary = micro?.summary || 'Review the concept behind this mistake.';
+      const steps = Array.isArray(micro?.steps) ? micro.steps : [];
+
+      groupEl.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="font-weight:900; color: var(--text-color);">${idx + 1}. ${title}</div>
+          <div class="review-mistake-meta">
+            <span>Misconception tag: <strong>${tagLabel}</strong></span>
+            <span>•</span>
+            <span>Count: <strong>${g.count}</strong></span>
+          </div>
+          <div class="review-mistake-expl">
+            <div style="font-weight:800; margin-bottom:6px;">Micro-lesson</div>
+            <div style="margin-bottom:10px;">${summary}</div>
+            ${steps.length ? `<ol style="margin: 0; padding-left: 18px;">${steps.map(s => `<li>${s}</li>`).join('')}</ol>` : ''}
+          </div>
         </div>
-        ${q?.explanation ? `<div class="review-mistake-expl">${q.explanation}</div>` : ``}
-
-        ${q?.explanationCorrect || q?.whyWrong || (Array.isArray(q?.misconceptions) && q?.misconceptions[0]?.explanation) || q?.remediation?.explanation
-          ? `<div class="review-mistake-expl">
-              <div style="font-weight:800; margin-bottom:6px;">Why this answer matters</div>
-              ${q.explanationCorrect && typeof q.explanationCorrect === 'string' && q.explanationCorrect.trim()
-                ? q.explanationCorrect
-                : (typeof q.whyWrong === 'string' && q.whyWrong.trim())
-                  ? q.whyWrong
-                  : (Array.isArray(q.misconceptions) && q.misconceptions[0] && typeof q.misconceptions[0].explanation === 'string' && q.misconceptions[0].explanation.trim())
-                    ? q.misconceptions[0].explanation
-                    : (q.remediation && typeof q.remediation.explanation === 'string')
-                      ? q.remediation.explanation
-                      : ''}
-            </div>`
-          : ``}
-
       `;
 
-      listEl.appendChild(item);
+      // Under each group, show the related missed questions (limited for readability)
+      const listUnderGroup = document.createElement('div');
+      listUnderGroup.style.marginTop = '12px';
+      listUnderGroup.style.display = 'flex';
+      listUnderGroup.style.flexDirection = 'column';
+      listUnderGroup.style.gap = '10px';
+
+      g.misses.slice(0, 12).forEach((m, mi) => {
+        const q = byQid.get(m.qid);
+        const qText = q?.q || "(Question text unavailable)";
+        const correctIndex = typeof q?.answerIndex === "number" ? q.answerIndex : null;
+        const correctText =
+          correctIndex !== null && Array.isArray(q?.options) ? q.options[correctIndex] : "";
+
+        const qEl = document.createElement('div');
+        qEl.className = 'review-mistake-item';
+        qEl.style.borderRadius = '10px';
+        qEl.style.padding = '14px';
+        qEl.style.background = 'rgba(255,255,255,0.02)';
+
+        qEl.innerHTML = `
+          <div class="review-mistake-q" style="margin-bottom:6px;">${mi + 1}. ${qText}</div>
+          <div class="review-mistake-meta">
+            <span>Correct answer: <strong>${correctText || '—'}</strong></span>
+          </div>
+          ${q?.explanation
+            ? `<div class="review-mistake-expl" style="margin-top:8px;">${q.explanation}</div>`
+            : ''}
+        `;
+
+        listUnderGroup.appendChild(qEl);
+      });
+
+      if (g.count > 12) {
+        const more = document.createElement('div');
+        more.className = 'small-note';
+        more.textContent = `Showing first 12 of ${g.count} items for this misconception.`;
+        listUnderGroup.appendChild(more);
+      }
+
+      groupEl.appendChild(listUnderGroup);
+      listEl.appendChild(groupEl);
     });
   }
 
